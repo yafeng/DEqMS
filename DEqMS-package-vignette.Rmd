@@ -1,0 +1,302 @@
+---
+title: "DEqMS Package"
+author: "YAFENG ZHU @ Karolinska Institutet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DEqMS package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Content
+
+The Vignette is used to guide users to perform differential protein expression analysis:
+
+1. Overview of DEqMS
+2. Installation
+3. Differential protein expression analysis
+    + 3.1 Example Dataset: A431 cells treated with three different miRNA mimics
+    + 3.2 Loading the data
+    + 3.3 Generate a summary of the data
+    + 3.4 Summarization and Normalization
+    + 3.5 Ordinary T test
+    + 3.6 Anova analysis
+    + 3.7 Limma analysis
+    + 3.8 Variance dependence on spectra count and non-linear regression
+    + 3.9 DEqMS analysis
+
+4. Comparing T test, Anova, Limma and DEqMS
+5. Visualization of the results
+    + 5.1 PSM/Peptide profile plot
+    + 5.2 Volcano plot
+    + 5.3 PCA plot
+    + 5.4 Sample correlation heatmap
+6. Conclusion
+7. Session Information
+
+## 1 Overview of DEqMS
+
+`DEqMS` works on top of Limma, a widely-used R package for microarray data analysis (Smyth G. et al 2004), and improve it with mass spectrometry specific data properties, variance dependence on peptide spectra count for statistical testing of differential protein expression. 
+
+## 2 Installation
+
+```{r,message=FALSE}
+source("DEqMS.R")
+library(matrixStats)
+library(plyr)
+library(limma)
+```
+
+## 3 Differential protein expression analysis
+### 3.1 Example Dataset: A431 cells treated with three different miRNA mimics
+we analyzed a protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Yan Z. et al. Oncogene 2016). The raw MS data was searched with MS-GF+ (Kim et al Nat Communications 2016) and post processed with Percolator (K??ll L. et al Nat Method 2007). A tabular text output of PSM intensity table filtered at 1% peptide level FDR is used as input for downstream analysis.
+
+### 3.2 Loading the data and preprocess
+Read a tabular input in which PSMs are in rows and samples are in columns.
+Intenisty values were log transformed since systematic effects and variance components are usually assumed to be additive on log scale (Oberg AL. et al JPR 2008; Hill EG. et al JPR 2008).
+```{r,echo = TRUE}
+dat.psm = read.table("miR_3-10_tmt10_psm_table.txt",stringsAsFactors = FALSE,sep="\t",header=T,comment.char = "",row.names = NULL)
+
+dat.psm = na.omit(dat.psm)
+dat.psm = dat.psm[!dat.psm$Protein.Group.Accessions=="",]
+dat.psm[,3:12] =  log2(dat.psm[,3:12])
+
+head(dat.psm)
+```
+Generate sample annotation table.
+```{r,echo = TRUE}
+cond = c("ctrl","miR372","miR191","ctrl","miR519",
+         "miR519","miR372","miR191","ctrl","miR372")
+
+sampleTable <- data.frame(
+  row.names = colnames(dat.psm)[3:12],
+  cond = as.factor(cond)
+)
+sampleTable
+```
+
+### 3.3 Generate a summary of the data
+Since each row is one PSM, to count how many PSMs per protein, we simply use function `table` in R to count the number of occurance that each protein ID appears.
+```{r , echo=TRUE, fig.height=5, fig.width=7}
+psm.count.table = as.data.frame(table(dat.psm$Protein.Group.Accessions))
+rownames(psm.count.table)=psm.count.table$Var1
+
+plot(sort(log2(psm.count.table$Freq)),pch=".",yaxt="n",
+     xlab="Proteins ordered by PSM count",ylab="PSM count")
+ylab = lab<-c(1,2,4,16,64,256)
+axis(2,at=log2(ylab),labels=ylab)
+
+```
+
+### 3.4 Summarization and Normalization
+Here, median summarization and equal median normalization are used. In this procedure, we substract the spectrum log2 intensity from the mean log2 intensities of control samples. The relative abundance estimate for a particular protein is calculated as the median over all spectra belonging to this protein. 
+Assume the log2 intensity of PSM `i` in sample `j` is $y_{i,j}$, its relative log2 intensity of PSM `i` in sample `j` is $y'_{i,j}$: 
+$$y'_{i,j} = y_{i,j} - mean_{j'\in ctrl}\ y_{i,j'} $$
+Relative abundance of protein `k` in sample `j` $Y_{k,j}$ is calculated as:
+$$Y_{k,j} = median_{i\in protein\ k}\ y'_{i,j} $$
+
+Corrections for differences in amounts of material loaded in the channels and sample processing are done by subtracting the channel median from the relative abundance (log2 ratio), normalizing all channels to have median zero.
+```{r,echo=TRUE, fig.height=4, fig.width=7}
+dat.gene = median.summary(dat.psm,group_col = 2, ref_col=c(3,6,11))
+dat.gene.nm = equal.median.normalization(dat.gene)
+rownames(dat.gene.nm) = dat.gene[,1]
+
+boxplot(dat.gene.nm,xlab="TMT 10 channels",ylab="log2 relative protein abundance")
+```
+
+### 3.5 Ordinary T test
+We first apply t.test to detect significant protein changes between ctrl samples and miR372 treated samples, both have three replicates.
+
+```{r,echo=TRUE}
+
+pval.372 = apply(dat.gene.nm, 1, function(x) 
+  t.test(as.numeric(x[c(1,4,9)]), as.numeric(x[c(2,7,10)]))$p.value)
+
+logFC.372 = rowMeans(dat.gene.nm[,c(2,7,10)])
+```
+
+Generate a data.frame of t.test results, add PSM count values and order the table by p-value.
+```{r,echo=TRUE}
+ttest.results = data.frame(gene=rownames(dat.gene.nm),
+                           logFC=logFC.372,P.Value = pval.372, 
+                           adj.pval = p.adjust(pval.372,method = "BH")) 
+
+ttest.results$PSMcount = psm.count.table[ttest.results$gene,]$Freq
+ttest.results = ttest.results[with(ttest.results, order(P.Value)), ]
+write.table(ttest.results,"miR372_vs_ctrl.ttest.results.txt",quote=F,sep="\t",row.names = F)
+head(ttest.results)
+```
+
+### 3.6 Anova analysis
+Anova analysis is equivalent to linear model analysis. The difference to Limma analysis is that estimated variance is not moderated using empirical bayesian approach as it is in Limma. The purpose here is to compare the statistical power to that when Limma is applied. We first make a design matrix and then use `lmFit` function in Limma for linear model analysis. The input for `lmFit` function is a matrix of relative protein abundance (log2 ratios) and a design matrix containing sample annotation. 
+Use `head(fit$coefficients)` to see effect size(fold change)  of genes for different conditions.
+
+```{r,echo=TRUE}
+gene.matrix = as.matrix(dat.gene.nm)
+design = model.matrix(~cond,sampleTable)
+design
+
+fit1 <- lmFit(gene.matrix,design)
+
+ord.t = fit1$coefficients[, 3]/fit1$sigma/fit1$stdev.unscaled[, 3]
+ord.p = 2*pt(-abs(ord.t), fit1$df.residual)
+ord.q = p.adjust(ord.p,method = "BH")
+anova.results = data.frame(gene=names(fit1$sigma),
+                           logFC=fit1$coefficients[,3],
+                           t=ord.t, 
+                           P.Value=ord.p, 
+                           adj.P.Val = ord.q)
+
+anova.results$PSMcount = psm.count.table[anova.results$gene,]$Freq
+anova.results = anova.results[with(anova.results,order(P.Value)),]
+write.table(anova.results,"miR372_vs_ctrl.anova.results.txt",quote=F,sep="\t",row.names = F)
+head(anova.results)
+```
+
+### 3.7 Limma analysis
+Limma is essentially a combination of linear model analysis and empirical bayeisan estimation of variance, the latter is applied to increase the statistical power by borrowing informations across genes to shrink the variance. 
+
+```{r,echo=TRUE}
+fit2 <- eBayes(lmFit(gene.matrix,design))
+head(fit2$coefficients)
+```
+
+Extract limma results using `topTable` function,  `coef = 3` allows you to extract the contrast of specific condition (miR372), option `n= Inf` output all rows instead of the top 10.
+Add PSM count values in the table.
+```{r,echo=TRUE}
+limma.results = topTable(fit2,coef = 3,n= Inf)
+limma.results$gene = rownames(limma.results)
+limma.results$PSMcount = psm.count.table[limma.results$gene,]$Freq
+write.table(limma.results,"miR372_vs_ctrl.limma.results.txt",quote=F,sep="\t",row.names = F)
+head(limma.results)
+```
+
+
+### 3.8 Variance dependence on spectra count
+We observed that the variance of gene across samples gradually decreases as the number of spectra count increases.
+```{r , echo=TRUE, fig.height=5, fig.width=10}
+dat.temp = data.frame(var = fit2$sigma^2,PSMcount = psm.count.table[names(fit2$sigma),]$Freq)
+dat.temp.filter = dat.temp[dat.temp$PSMcount<21,]
+
+op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
+plot(log2(psm.count.table[rownames(dat.gene.nm),2]),dat.gene.nm[,1]-dat.gene.nm[,4],xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates",main="variation between two control replicates")
+
+boxplot(log2(var)~PSMcount,dat.temp.filter,xlab="PSMcount",ylab="log2(Variance)",main="variance dependence on PSM count")
+
+```
+
+### 3.9 DEqMS analysis
+Limma assumes same prior variance for all genes, the function `spectra.count.eBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006). Intead of locally weighted regression (Maureen et al 2006) between prior variance and intensity, DEqMS use `nls` function with an explicit fomula (Var ~ const+A/(spectra.count)) to fit prior variance against PSM count.   
+  Outputs of `spectra.count.eBayes`:  
+  object is augmented form of "fit" object from `eBayes` in Limma, with the additions being:  
+    `sca.t`	 - Spectra Count Adjusted posterior t-value  
+    `sca.p`	 - Spectra Count Adjusted posterior p-value  
+    `sca.dfprior` - estimated prior degrees of freedom  
+    `sca.priorvar`- estimated prior variance  
+    `sca.postvar` - estimated posterior variance  
+    `nls.model` - fitted non-linear model  
+
+```{r,echo=TRUE}
+fit2$PSM.count = psm.count.table[names(fit2$sigma),]$Freq
+
+fit3 = spectra.count.eBayes(fit2,3)
+sca.results = topTable(fit3,coef = 3,n= Inf)
+
+sca.results$gene = row.names(sca.results)
+sca.results$PSM.count = psm.count.table[rownames(sca.results),]$Freq
+sca.results$sca.t = fit3$sca.t[rownames(sca.results)]
+sca.results$sca.P.Value = fit3$sca.p[rownames(sca.results)]
+sca.results$sca.adj.pval = p.adjust(sca.results$sca.P.Value,method = "BH")
+
+sca.results = sca.results[with(sca.results, order(sca.P.Value)), ]
+head(sca.results)
+write.table(sca.results,"miR372_vs_ctrl.DEqMS.results.txt",quote=F,sep="\t",row.names = F)
+```
+
+Check if the fitted non-linear model is correct.
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+plot.nls.fit(fit3)
+```
+
+
+## 4 Comparing T test, Anova, Limma and DEqMS
+### 4.1 the effect of spectra.count.eBayes function on variance and p-values
+
+Visualize the change of posterior variance after PSM count adjustment. The plot here shows posterior variance of proteins "shrink" toward the fitted value to different extent depending on PSM number. 
+```{r, echo=TRUE, fig.height=5, fig.width=10}
+x = fit3$PSM.count
+y = fit3$s2.post
+op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
+plot(log2(x),log2(y),xlab = "log2(PSMcount)",ylab="log2(Variance)",main="Posterior Variance in Limma")
+
+y = fit3$sca.postvar
+plot(log2(x),log2(y),xlab = "log2(PSMcount)",ylab="log2(Variance)",main="Posterior Variance in DEqMS")
+```
+
+Here we want to see how p-values changed after applying `spectra.count.eBayes` in DEqMS. As shown in this figure, p-values (ctrl vs miR372) of proteins identified with low number of PSMs become larger (less significant) compared to p-values reported from limma, while p-values of proteins with high PSM number are mostly unaffected.
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+plot(log2(sca.results$PSM.count),log10(sca.results$sca.P.Value)-log10(sca.results$P.Value),xlab="log2(PSM count)",ylab="log10(p-values) changes",main="DEqMS vs Limma")
+abline(h=0,col="red")
+```
+
+### 4.2 Comparing p-values by different analysis.
+plotting top 500 genes ranked by p-values.
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+plot(sort(-log10(limma.results$P.Value),decreasing = T)[1:500], type="l",lty=2,lwd=2, ylab="-log10(p-value)",xlab="Proteins ranked by p-values",col="purple",ylim=c(0,9))
+lines(sort(-log10(sca.results$sca.P.Value),decreasing = T)[1:500], lty=1,lwd=2,col="red")
+lines(sort(-log10(anova.results$P.Value),decreasing = T)[1:500], lty=2,lwd=2,col="blue")
+lines(sort(-log10(ttest.results$P.Value),decreasing = T)[1:500], lty=2,lwd=2,col="orange")
+legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
+```
+
+### 4.3 Make a null comparison 
+The purpose is to see how many false positives we get from different tests.
+Group 1 (ctrl+miR372+miR191) and Group 2 (ctrl+miR372+miR191) were compared here, we should not expect significant hits from the statistical tests.
+
+```{r}
+shuffle.cond = c("1","1","1","3","3",
+         "4","4","2","2","2")
+
+shuffle.Table <- data.frame(
+  row.names = colnames(dat.psm)[3:12],
+  false.cond = as.factor(shuffle.cond),
+  true.cond = as.factor(cond)
+)
+
+shuffle.Table
+shuffle.design = model.matrix(~false.cond,shuffle.Table)
+```
+
+Do t.test on falsely labelled conditions.
+```{r}
+null.ttest.pval = apply(dat.gene.nm, 1, function(x) 
+  t.test(as.numeric(x[c(1,2,3)]), as.numeric(x[c(8,9,10)]))$p.value)
+```
+
+Anova, limma and DEqMS analysis on the Null Comparison.
+```{r}
+null.fit1 = lmFit(gene.matrix,shuffle.design)
+null.fit1$t.value = null.fit1$coefficients[, 2]/null.fit1$sigma/null.fit1$stdev.unscaled[, 2]
+null.fit1$p.value = 2*pt(-abs(null.fit1$t.value), null.fit1$df.residual)
+
+
+null.fit2 = eBayes(null.fit1)
+null.fit2$PSM.count = psm.count.table[names(null.fit2$sigma),]$Freq
+
+null.fit3 = spectra.count.eBayes(null.fit2,2)
+head(null.fit2$coefficients)
+```
+
+Plotting top 100 genes ranked by p-values.
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+plot(sort(-log10(null.fit2$p.value[,2]),decreasing = T)[1:100], type="l",lty=2,lwd=2, ylab="-log10(p-value)",xlab="number of false positives",col="purple",
+     main = "p-value distribution from the Null comparison")
+lines(sort(-log10(null.fit3$sca.p),decreasing = T)[1:100], lty=1,lwd=2,col="red")
+lines(sort(-log10(null.fit1$p.value),decreasing = T)[1:100], lty=2,lwd=2,col="blue")
+lines(sort(-log10(null.ttest.pval),decreasing = T)[1:100], lty=2,lwd=2,col="orange")
+legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
+abline(h=2)
+```
+
+### 5 Visualization of the results
