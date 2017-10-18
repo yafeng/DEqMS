@@ -134,6 +134,7 @@ Use `head(fit$coefficients)` to see effect size(fold change)  of genes for diffe
 
 ```{r,echo=TRUE}
 gene.matrix = as.matrix(dat.gene.nm)
+colnames(gene.matrix) = as.character(sampleTable$cond)
 design = model.matrix(~cond,sampleTable)
 design
 
@@ -198,7 +199,7 @@ Limma assumes same prior variance for all genes, the function `spectra.count.eBa
     `nls.model` - fitted non-linear model  
 
 ```{r,echo=TRUE}
-fit2$PSM.count = psm.count.table[names(fit2$sigma),]$Freq
+fit2$count = psm.count.table[names(fit2$sigma),]$Freq
 
 fit3 = spectra.count.eBayes(fit2,3)
 sca.results = topTable(fit3,coef = 3,n= Inf)
@@ -225,7 +226,7 @@ plot.nls.fit(fit3)
 
 Visualize the change of posterior variance after PSM count adjustment. The plot here shows posterior variance of proteins "shrink" toward the fitted value to different extent depending on PSM number. 
 ```{r, echo=TRUE, fig.height=5, fig.width=10}
-x = fit3$PSM.count
+x = fit3$count
 y = fit3$s2.post
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
 plot(log2(x),log2(y),xlab = "log2(PSMcount)",ylab="log2(Variance)",main="Posterior Variance in Limma")
@@ -282,7 +283,7 @@ null.fit1$p.value = 2*pt(-abs(null.fit1$t.value), null.fit1$df.residual)
 
 
 null.fit2 = eBayes(null.fit1)
-null.fit2$PSM.count = psm.count.table[names(null.fit2$sigma),]$Freq
+null.fit2$count = psm.count.table[names(null.fit2$sigma),]$Freq
 
 null.fit3 = spectra.count.eBayes(null.fit2,2)
 head(null.fit2$coefficients)
@@ -299,4 +300,64 @@ legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple",
 abline(h=2)
 ```
 
-### 5 Visualization of the results
+## 5 Visualization of the results
+
+### 5.1 PSM/Peptide profile plot
+`make.profile.plot` function will plot log2 intensity of each PSM/peptide of the protein  in the input table.
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+m = dat.psm[dat.psm$Protein.Group.Accessions=="C9J3D7",]
+make.profile.plot(m)
+```
+
+### 5.3 Volcano plot
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+library(ggplot2)
+library(ggrepel)
+
+sca.results$log.adj.pval = -log10(sca.results$sca.adj.pval)
+ggplot(sca.results, aes(x = logFC, y = log.adj.pval)) + 
+  geom_point()+
+  theme_bw(base_size = 16) + # change theme
+  xlab(expression("log2 miR372/ctrl")) + # x-axis label
+  ylab(expression(" -log10 adj.pval")) + # y-axis label
+  geom_vline(xintercept = c(-1,1), colour = "red") + # Add fold change cutoffs
+  geom_hline(yintercept = 2, colour = "red") + # Add significance cutoffs
+  geom_vline(xintercept = 0, colour = "black") + # Add 0 lines
+  scale_colour_gradient(low = "black", high = "black", guide = FALSE)+  # Color black
+  geom_text_repel(data=subset(sca.results, abs(logFC) > 1 & log.adj.pval> 2),
+                  aes( logFC, log.adj.pval ,label=gene)) # add gene label
+```
+
+### 5.3 PCA plot
+```{r, echo=TRUE, fig.height=7, fig.width=7}
+library( RColorBrewer )
+pr <- prcomp(t(gene.matrix)) 
+plot( pr$x[,1:2], asp=1, col=brewer.pal(4,"Set1")[sampleTable$cond], pch=17)
+text( pr$x[,1], pr$x[,2]-1, label=as.character(sampleTable$cond))
+legend( "bottomright", legend = levels( sampleTable$cond ), 
+   col = brewer.pal(4,"Set1"), pch=17 )
+```
+
+### 5.4 Sample correlation heatmaps
+plot sample correlation heatmap
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+library( pheatmap )
+cm <- cor( gene.matrix )
+# rearrange columns so that same sample types are together
+cm.order = cm[order(colnames(cm)),order(colnames(cm))]
+
+pheatmap( cm.order,
+   cluster_rows=FALSE, cluster_cols=FALSE,
+   color = colorRampPalette(c("blue", "white", "red"))(100))
+```
+
+
+or plot Eucldiean distance heatmap
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+dm <- as.matrix( dist( t( gene.matrix ) ))
+dm.order = dm[order(colnames(cm)),order(colnames(cm))]
+pheatmap( dm.order,
+   cluster_rows=FALSE, cluster_cols=FALSE,
+   color = colorRampPalette(c("red", "white"))(100))
+
+```

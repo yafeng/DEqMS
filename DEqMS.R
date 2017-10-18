@@ -12,7 +12,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   ##  Inputs:
   ##  2 objects: mdata and testcol
   ##  "mdata" should be a list object from the lmFit or eBayes fcn. in  
-  ##       limma, or at least have attributes named sigma, PSM.count,  
+  ##       limma, or at least have attributes named sigma, count,  
   ##     df.residual, coefficients, and stdev.unscaled.
   ##  "testcol" is an integer or vector indicating the column(s) of
   ##       mdata$coefficients for which the function is to be performed.
@@ -47,7 +47,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   eg<-logVAR-digamma(df/2)+log(df/2)
   
   y=mdata$sigma^2
-  x=mdata$PSM.count
+  x=mdata$count
   # start values have negelectable influence on the fitted model
   nls.model = nls(y ~ const+A/x,start = list(const=0.1,A=0.05))
   y.pred = predict(nls.model)
@@ -55,7 +55,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   egpred<-log(y.pred)-digamma(df/2)+log(df/2)
   
   myfct<- (eg-egpred)^2 - trigamma(df/2)
-  print("non linear regression (Var ~ const+A/(spectra.count))")
+  print("non linear regression (Var ~ const+A/(count))")
   
   mean.myfct<-mean(myfct,na.rm=TRUE)
   priordf<-vector(); testd0<-vector()
@@ -90,10 +90,9 @@ spectra.count.eBayes<-function(mdata,testcol) {
 }
 
 plot.nls.fit <- function (fit) {
-  x = fit$PSM.count
+  x = fit$count
   y = fit$sigma^2
-  plot(log2(x),log2(y),xlab = "log2(PSMcount)",ylab="log2(Variance)",
-       main="fitted non-linear model of variance against PSM count")
+  plot(log2(x),log2(y),xlab = "log2(count)",ylab="log2(pooled variance)")
   model = fit$nls.model
   y.pred <- predict(model)
   k = order(x)
@@ -113,7 +112,9 @@ make.profile.plot <- function(dat){
     geom_point()+
     geom_line(aes(group=PSM_id,col=Sequence))+
     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
-    ggtitle(dat[1,1])+
+    ggtitle(dat[1,2])+
+    xlab("samples")+
+    ylab("log2 intensity")+
     theme(plot.title = element_text(hjust = 0.5))
 }
 
@@ -153,4 +154,18 @@ equal.median.normalization <- function(df) {
   sizefactor = colMedians(as.matrix(df[,2:ncol(df)]))
   dat.nm = sweep(df[,2:ncol(df)],2,sizefactor)
   return (dat.nm)
+}
+
+median.sweeping <- function(dat,group_col) {
+  library(plyr)
+  library(matrixStats)
+  
+  dat.ratio = dat
+  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]))
+  dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
+                      function(x) colMedians(as.matrix(x[,3:ncol(dat)])))
+  colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
+  
+  dat.summary.nm = equal.median.normalization(dat.summary)
+  return (dat.summary.nm)
 }
