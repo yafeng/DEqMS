@@ -8,12 +8,19 @@ git clone https://github.com/yafeng/DEqMS
 DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectra.count.eBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006). Intead of locally weighted regression (Maureen et al 2006) between prior variance and intensity, DEqMS use `nls` function with an explicit fomula (Var ~ const+A/(spectra.count)) to fit prior variance against PSM/peptide count.
 
 Outputs of `spectra.count.eBayes`:
+
 object is augmented form of "fit" object from `eBayes` in Limma, with the additions being:
+
 `sca.t`     - Spectra Count Adjusted posterior t-value
+
 `sca.p`     - Spectra Count Adjusted posterior p-value
+
 `sca.dfprior` - estimated prior degrees of freedom
+
 `sca.priorvar`- estimated prior variance
+
 `sca.postvar` - estimated posterior variance
+
 `nls.model` - fitted non-linear model
 
 ## Usage
@@ -56,7 +63,7 @@ use control samples to calculate relative ratios. `group_col` is the column numb
 dat.gene = median.summary(dat.psm,group_col = 2, ref_col=c(3,6,11))
 dat.gene.nm = equal.median.normalization(dat.gene)
 
-or you can use median sweeping method (Gina et al JPR 2017).
+#or you can use median sweeping method (Gina et al JPR 2017).
 data.gene.nm = median.sweep(dat.psm,group_col = 2)
 
 rownames(dat.gene.nm) = dat.gene[,1]
@@ -69,7 +76,7 @@ design = model.matrix(~cond,sampleTable)
 
 fit1 <- eBayes(lmFit(gene.matrix,design))
 fit1$count <- count.table[names(fit1$sigma),]$Freq  # add PSM/peptide count values
-fit2 = spectra.count.eBayes(fit1,3) # two arguements, a fit object (limm output), and the column number of coefficients
+fit2 = spectra.count.eBayes(fit1,3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
 
 ### 6. Output the results
