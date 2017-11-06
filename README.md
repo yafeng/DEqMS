@@ -40,7 +40,9 @@ The first two columns in input table should be peptide sequence and protein/gene
 dat.psm = read.table("input_table.txt",stringsAsFactors = FALSE,sep="\t",header=T,comment.char = "",row.names = NULL)
 dat.psm = na.omit(dat.psm)   # remove rows with missing values
 dat.psm = dat.psm[!dat.psm$Protein.Group.Accessions=="",]  # remove rows with missing protein ID
-dat.psm[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
+
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
 
 count.table = as.data.frame(table(dat.psm$Protein.Group.Accessions)) # generate count table
 rownames(count.table)=count.table$Var1
@@ -62,13 +64,21 @@ You can substract PSMs/peptides log2 intensity by the mean log2 intensities of c
 
 use control samples to calculate relative ratios. `group_col` is the column number you want to group by, set 2 if genes/proteins are in second column. `ref_col`  is the column where control samples are.
 ```{r}
-dat.gene = median.summary(dat.psm,group_col = 2, ref_col=c(3,6,11))
+dat.gene = median.summary(dat.psm.log,group_col = 2, ref_col=c(3,6,11))
 dat.gene.nm = equal.median.normalization(dat.gene)
 
-#or you can use median sweeping method (Gina et al JPR 2017).
-data.gene.nm = median.sweep(dat.psm,group_col = 2)
+#or you can use median sweeping method (Gina et al JPR 2017)
+#median.sweep does equal.median.normalization for you automatically
 
-rownames(dat.gene.nm) = dat.gene[,1]
+data.gene.nm = median.sweep(dat.psm.log,group_col = 2)
+
+#or you can use Factor Analysis for Robust Microarray Summarization (FARMS)
+#see (Hochreiter S et al Bioinformatic 2007, Zhang B et al MCP 2017)
+#input is psm raw intensity, not log transformed values
+
+dat.gene = farms.summary(dat.psm,group_col = 2)
+dat.gene.nm = equal.median.normalization(dat.gene)
+
 ```
 
 ### 5. Differential expression analysis
@@ -78,21 +88,12 @@ design = model.matrix(~cond,sampleTable)
 
 fit1 <- eBayes(lmFit(gene.matrix,design))
 fit1$count <- count.table[names(fit1$sigma),]$Freq  # add PSM/peptide count values
-fit2 = spectra.count.eBayes(fit1,3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
+fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
 
 ### 6. Output the results
 ```{r}
-sca.results = topTable(fit2,coef = 3,n= Inf)
-
-sca.results$gene = row.names(sca.results)
-sca.results$PSM.count = psm.count.table[rownames(sca.results),]$Freq
-sca.results$sca.t = fit2$sca.t[rownames(sca.results)]
-sca.results$sca.P.Value = fit3$sca.p[rownames(sca.results)]
-sca.results$sca.adj.pval = p.adjust(sca.results$sca.P.Value,method = "BH")
-
-sca.results = sca.results[with(sca.results, order(sca.P.Value)), ] # order them based on p-values
-
+sca.results = output_result(fit2,coef_col=3)
 write.table(sca.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
 ```
 

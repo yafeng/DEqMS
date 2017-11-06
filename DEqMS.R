@@ -1,4 +1,4 @@
-spectra.count.eBayes<-function(mdata,testcol) {
+spectra.count.eBayes<-function(mdata,coef_col) {
   
   ##########################################################################
   #  Functions used in DEqMS package to calculate spectra count adjusted p-values
@@ -10,11 +10,11 @@ spectra.count.eBayes<-function(mdata,testcol) {
   ##  (Maureen A. Sartor et al BMC Bioinformatics 2006).  
   ##  
   ##  Inputs:
-  ##  2 objects: mdata and testcol
+  ##  2 objects: mdata and ceof_col
   ##  "mdata" should be a list object from the lmFit or eBayes fcn. in  
   ##       limma, or at least have attributes named sigma, count,  
   ##     df.residual, coefficients, and stdev.unscaled.
-  ##  "testcol" is an integer or vector indicating the column(s) of
+  ##  "coef_col" is an integer or vector indicating the column(s) of
   ##       mdata$coefficients for which the function is to be performed.
   ##
   ##  Outputs:
@@ -75,7 +75,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   post.var<- (d0*s02 + df*mdata$sigma^2)/(d0+df)
   post.df<-d0+df
   # sca.t and scc.p stands for spectra count adjusted t and p values.  
-  sca.t<-mdata$coefficients[,testcol]/(mdata$stdev.unscaled[,testcol]*sqrt(post.var)) # divided by standard error
+  sca.t<-mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var)) # divided by standard error
   sca.p<-2*(1-pt(abs(sca.t),post.df))
   print("P-values calculated")
   
@@ -114,7 +114,8 @@ plot.nls.fit <- function (fit) {
   lines(log2(x[k]),log2(y.pred[k]),col='red',lwd=3)
 }
 
-LMM.fit <- function (dat, id.vars=1:2, cond, sample_size) {
+LMM.fit <- function (dat, id.vars=1:2, cond) {
+  library(lme4)
   
   dat.unique <- dat[!duplicated(dat[,3:ncol(dat)])]
   n =  nrow(dat.unique)
@@ -124,6 +125,7 @@ LMM.fit <- function (dat, id.vars=1:2, cond, sample_size) {
     colnames(mf)[3:4] = c("Sample","Log.Intensity")
     mf$condition = unlist(lapply(as.factor(cond),function (x) rep(x,n)))
     
+    sample_size = length(cond)
     mf$PSM = rep(1:n,times= sample_size)
     mixed.model = lmer(Log.Intensity~condition+(1|PSM)+(1|Sample),data=mf)
     
@@ -151,8 +153,6 @@ make.profile.plot <- function(dat){
 
 
 median.summary <- function(dat,group_col,ref_col) {
-  library(plyr)
-  library(matrixStats)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col])
@@ -172,8 +172,6 @@ median_polish <- function (m) {
 }
 
 mepolish.summary <- function(dat,group_col,ref_col) {
-  library(plyr)
-  library(matrixStats)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col])
@@ -192,8 +190,6 @@ equal.median.normalization <- function(dat) {
 }
 
 median.sweeping <- function(dat,group_col) {
-  library(plyr)
-  library(matrixStats)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]))
@@ -209,6 +205,7 @@ median.sweeping <- function(dat,group_col) {
 }
 
 farms.method <- function(df){
+  library(farms)
   if (nrow(df)==1){
     dat = log2(as.matrix(df))
   }else {dat = generateExprVal.method.farms(as.matrix(df))$expr}
