@@ -2,11 +2,11 @@ spectra.count.eBayes<-function(mdata,testcol) {
   
   ##########################################################################
   #  Functions used in DEqMS package to calculate spectra count adjusted p-values
-  #  Written by Yafeng Zhu.
+  #
   ##########################################################################
   ##
   ##  This function adjusts the T-statistics and p-values from proteomics experiment.  
-  ##  The method contains elements similar in nature to intensity-based Bayes method 
+  ##  The method is similar in nature to intensity-based Bayes method
   ##  (Maureen A. Sartor et al BMC Bioinformatics 2006).  
   ##  
   ##  Inputs:
@@ -24,7 +24,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   ##	sca.dfprior - estimated prior degrees of freedom
   ##	sca.priorvar- estimated prior variance
   ##	sca.postvar - estimated posterior variance
-  ##  nls.model - fitted non-linear model
+  ##    nls.model - fitted non-linear model
   ##
   ##  Example Function Call:
   ##      sca.fit <- spectra.count.eBayes(eBayes.output,1:4)
@@ -32,7 +32,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   ###########################################################################
   #  The function was adapted from:
   #  Function for IBMT (Intensity-based Moderated T-statistic)
-  #  Written by: Maureen Sartor,sartorma@ucmail.uc.edu
+  #  Written by: Maureen Sartor
   #  University of Cincinnati, 2006
   ###########################################################################
   
@@ -48,6 +48,7 @@ spectra.count.eBayes<-function(mdata,testcol) {
   
   y=mdata$sigma^2
   x=mdata$count
+  names(mdata$count) = names(mdata$sigma)
   # start values have negelectable influence on the fitted model
   nls.model = nls(y ~ const+A/x,start = list(const=0.1,A=0.05))
   y.pred = predict(nls.model)
@@ -89,6 +90,20 @@ spectra.count.eBayes<-function(mdata,testcol) {
   output
 }
 
+output_result <-function(sca.fit,coef_col){
+  results.table = topTable(sca.fit,coef = coef_col,n= Inf)
+  
+  results.table$gene = row.names(results.table)
+  results.table$PSMcount = sca.fit$count[results.table$gene]
+  
+  results.table$sca.t = sca.fit$sca.t[results.table$gene]
+  results.table$sca.P.Value = sca.fit$sca.p[results.table$gene]
+  results.table$sca.adj.pval = p.adjust(results.table$sca.P.Value,method = "BH")
+  results.table = results.table[order(results.table$sca.P.Value), ]
+}
+
+
+
 plot.nls.fit <- function (fit) {
   x = fit$count
   y = fit$sigma^2
@@ -99,6 +114,22 @@ plot.nls.fit <- function (fit) {
   lines(log2(x[k]),log2(y.pred[k]),col='red',lwd=3)
 }
 
+LMM.fit <- function (dat, id.vars=1:2, cond, sample_size) {
+  
+  dat.unique <- dat[!duplicated(dat[,3:ncol(dat)])]
+  n =  nrow(dat.unique)
+  
+  if (n>1){
+    mf = melt(dat,id.vars = id.vars)
+    colnames(mf)[3:4] = c("Sample","Log.Intensity")
+    mf$condition = unlist(lapply(as.factor(cond),function (x) rep(x,n)))
+    
+    mf$PSM = rep(1:n,times= sample_size)
+    mixed.model = lmer(Log.Intensity~condition+(1|PSM)+(1|Sample),data=mf)
+    
+    return (mixed.model)
+  }else{print ("only one peptide/PSM is not enough to fit mixed model")}
+}
 
 
 make.profile.plot <- function(dat){
@@ -129,12 +160,14 @@ median.summary <- function(dat,group_col,ref_col) {
                       function(x) colMedians(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
-  return (dat.summary)
+  dat.new = dat.summary[,-1]
+  rownames(dat.new) = dat.summary[,1]
+  return (dat.new)
 }
 
 
-median_polish <- function (df) {
-  dat = medpolish(df,trace.iter=FALSE)$col
+median_polish <- function (m) {
+  dat = medpolish(m,trace.iter=FALSE)$col
   return (dat)
 }
 
@@ -150,9 +183,11 @@ mepolish.summary <- function(dat,group_col,ref_col) {
   return (dat.summary)
 }
 
-equal.median.normalization <- function(df) {
-  sizefactor = colMedians(as.matrix(df[,2:ncol(df)]))
-  dat.nm = sweep(df[,2:ncol(df)],2,sizefactor)
+
+
+equal.median.normalization <- function(dat) {
+  sizefactor = colMedians(as.matrix(dat))
+  dat.nm = sweep(dat,2,sizefactor)
   return (dat.nm)
 }
 
@@ -166,6 +201,28 @@ median.sweeping <- function(dat,group_col) {
                       function(x) colMedians(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
-  dat.summary.nm = equal.median.normalization(dat.summary)
-  return (dat.summary.nm)
+  dat.new = dat.summary[,-1]
+  rownames(dat.new) = dat.summary[,1]
+  
+  dat.nm = equal.median.normalization(dat.new)
+  return (dat.nm)
+}
+
+farms.method <- function(df){
+  if (nrow(df)==1){
+    dat = log2(as.matrix(df))
+  }else {dat = generateExprVal.method.farms(as.matrix(df))$expr}
+  return (dat)
+}
+
+farms.summary <- function(dat,group_col) {
+  dat.log = ddply(dat,colnames(dat)[group_col],
+                      function(x) farms.method(x[,3:ncol(dat)]))
+  
+  colnames(dat.log)[2:ncol(dat.log)]=colnames(dat)[3:ncol(dat)]
+  
+  dat.ratio = dat.log
+  dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]))
+  
+  return (dat.summary)
 }
