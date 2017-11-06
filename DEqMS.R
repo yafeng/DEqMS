@@ -171,14 +171,15 @@ median_polish <- function (m) {
   return (dat)
 }
 
-mepolish.summary <- function(dat,group_col,ref_col) {
-  
-  dat.ratio = dat
-  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col])
-  dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
+medpolish.summary <- function(dat,group_col) {
+
+  dat.summary = ddply(dat,colnames(dat)[group_col],
                       function(x) median_polish(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
-  return (dat.summary)
+  
+  dat.new = dat.summary[,-1]
+  rownames(dat.new) = dat.summary[,1]
+  return (dat.new)
 }
 
 
