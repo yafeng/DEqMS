@@ -1,5 +1,5 @@
 # DEqMS
-DEqMS is a tool for quantitative proteomic analysis, developped by Yafeng Zhu @ Karolinska Institutet. Manuscript in submission.
+DEqMS is a tool for quantitative proteomic analysis, developped by Yafeng Zhu @ Karolinska Institutet. Manuscript in preparation.
 
 ## Installation
 git clone https://github.com/yafeng/DEqMS
@@ -73,7 +73,7 @@ Here we show how to use different functions to summarize peptide data to protein
 data.gene.nm = median.sweep(dat.psm.log,group_col = 2)
 ```
 
-2. calculate ratio using reference channels and then summarize to protein level by median of all PSMs/Peptides.
+2. calculate ratio using reference channels and then summarize to protein level by the median of all PSMs/Peptides.
 ```{r}
 dat.gene = median.summary(dat.psm.log,group_col = 2, ref_col=c(3,6,11))
 dat.gene.nm = equal.median.normalization(dat.gene)
@@ -105,6 +105,10 @@ fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from
 ```
 ### 6. plot the fitted prior variance
 Check if non-linear regression between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, black dots are pooled variances calculated for each gene.
+```{r}
+plot.nls.fit(fit2)
+```
+
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/nls.fit.png)
 
 ### 7. Output the results
