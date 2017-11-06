@@ -103,7 +103,8 @@ fit1 <- eBayes(lmFit(gene.matrix,design))
 fit1$count <- count.table[names(fit1$sigma),]$Freq  # add PSM/peptide count values
 fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
-### 6. Check if non-linear regression between variance and peptide/PSMs count works as expected. It should similar to this.
+### 6. plot the fitted prior variance
+Check if non-linear regression between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, black dots are pooled variances calculated for each gene.
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/nls.fit.png)
 
 ### 7. Output the results
