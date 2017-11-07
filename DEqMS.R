@@ -209,7 +209,7 @@ farms.method <- function(df){
   library(farms)
   if (nrow(df)==1){
     dat = log2(as.matrix(df))
-  }else {dat = generateExprVal.method.farms(as.matrix(df))$expr}
+  }else {dat = generateExprVal.method.farms(as.matrix(na.omit(df)))$expr}
   return (dat)
 }
 
@@ -221,6 +221,9 @@ farms.summary <- function(dat,group_col) {
   
   dat.ratio = dat.log
   dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]))
+  
+  dat.summary = dat.ratio[,-1]
+  rownames(dat.summary) = dat.ratio[,1]
   
   return (dat.summary)
 }
