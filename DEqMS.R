@@ -1,4 +1,4 @@
-spectra.count.eBayes<-function(mdata,coef_col) {
+spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   
   ##########################################################################
   #  Functions used in DEqMS package to calculate spectra count adjusted p-values
@@ -37,26 +37,34 @@ spectra.count.eBayes<-function(mdata,coef_col) {
   ###########################################################################
   
   
-  library("stats")
-  library("limma")
+  require("stats")
+  require("limma")
   
   logVAR<-log(mdata$sigma^2)
   df<-mdata$df.residual
   numgenes<-length(logVAR[df>0])	
   df[df==0]<-NA
   eg<-logVAR-digamma(df/2)+log(df/2)
-  
-  y=mdata$sigma^2
-  x=mdata$count
   names(mdata$count) = names(mdata$sigma)
-  # start values have negelectable influence on the fitted model
-  nls.model = nls(y ~ const+A/x,start = list(const=0.1,A=0.05))
-  y.pred = predict(nls.model)
   
-  egpred<-log(y.pred)-digamma(df/2)+log(df/2)
+  output<-mdata
+  
+  if (fit.method == "loess"){
+    x=log2(mdata$count)
+    loess.model = loess(logVAR~x,span = 0.75)
+    y.pred = predict(loess.model)
+    output$loess.model = loess.model
+  }else if (fit.method == "nls"){
+    x=mdata$count
+    y=mdata$sigma^2
+    nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
+    y.pred = log(predict(nls.model))
+    output$nls.model = nls.model
+  }
+  
+  egpred<-y.pred-digamma(df/2)+log(df/2)
   
   myfct<- (eg-egpred)^2 - trigamma(df/2)
-  print("non linear regression (Var ~ const+A/(count))")
   
   mean.myfct<-mean(myfct,na.rm=TRUE)
   priordf<-vector(); testd0<-vector()
@@ -68,7 +76,7 @@ spectra.count.eBayes<-function(mdata,coef_col) {
     }
   }
   d0<-testd0[match(min(priordf),priordf)]
-  print("Prior degrees freedom found")
+  #print("Prior degrees freedom found")
   
   s02<-exp(egpred + digamma(d0/2) - log(d0/2))
   
@@ -77,15 +85,14 @@ spectra.count.eBayes<-function(mdata,coef_col) {
   # sca.t and scc.p stands for spectra count adjusted t and p values.  
   sca.t<-mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var)) # divided by standard error
   sca.p<-2*(1-pt(abs(sca.t),post.df))
-  print("P-values calculated")
+  #print("P-values calculated")
   
-  output<-mdata
+  
   output$sca.t<-sca.t
   output$sca.p<-sca.p
   output$sca.postvar<-post.var
   output$sca.priorvar<-s02
   output$sca.dfprior<-d0
-  output$nls.model = nls.model
   
   output
 }
@@ -102,20 +109,33 @@ output_result <-function(sca.fit,coef_col){
   results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-
-
-plot.nls.fit <- function (fit) {
+plot.fit.curve <- function (fit,title="", xlab="peptide count",type = "scatterplot") {
   x = fit$count
   y = fit$sigma^2
-  plot(log2(x),log2(y),xlab = "log2(count)",ylab="log2(pooled variance)")
-  model = fit$nls.model
-  y.pred <- predict(model)
-  k = order(x)
-  lines(log2(x[k]),log2(y.pred[k]),col='red',lwd=3)
+  model = fit$fit.model
+  
+  if (type=="scatterplot"){
+    plot(log2(x),log(y),xlab = xlab,ylab="log(pooled variance)",main= title)
+    
+    y.pred <- predict(model)
+    k = order(x)
+    lines(log2(x[k]),y.pred[k],col='red',lwd=3)
+
+  }else if (type=="boxplot"){
+    df.temp = data.frame(pep_count =x, variance = y )
+    df.temp.filter = df.temp[df.temp$pep_count<21,]
+    boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
+            ylab = "log(pooled.variance)", main=title)
+    
+    y.pred <- predict(model,log2(1:20))
+    lines(1:20,y.pred,col='red',lwd=3)
+  }else{
+    stop("only scatterplot and boxplot are supported")
+  }
 }
 
 LMM.fit <- function (dat, id.vars=1:2, cond) {
-  library(lme4)
+  require(lme4)
   
   dat.unique <- dat[!duplicated(dat[,3:ncol(dat)])]
   n =  nrow(dat.unique)
@@ -136,8 +156,8 @@ LMM.fit <- function (dat, id.vars=1:2, cond) {
 
 make.profile.plot <- function(dat){
   
-  library(reshape2)
-  library(ggplot2)
+  require(reshape2)
+  require(ggplot2)
   
   m = melt(dat) 
   m$PSM_id =  rep(1:nrow(dat),10)
@@ -153,6 +173,7 @@ make.profile.plot <- function(dat){
 
 
 median.summary <- function(dat,group_col,ref_col) {
+  require(plyr)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col])
@@ -167,12 +188,13 @@ median.summary <- function(dat,group_col,ref_col) {
 
 
 median_polish <- function (m) {
+  require(matrixStats)
   dat = medpolish(m,trace.iter=FALSE)$col
   return (dat)
 }
 
 medpolish.summary <- function(dat,group_col) {
-
+  require(plyr)
   dat.summary = ddply(dat,colnames(dat)[group_col],
                       function(x) median_polish(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
@@ -185,12 +207,15 @@ medpolish.summary <- function(dat,group_col) {
 
 
 equal.median.normalization <- function(dat) {
+  require(matrixStats)
   sizefactor = colMedians(as.matrix(dat))
   dat.nm = sweep(dat,2,sizefactor)
   return (dat.nm)
 }
 
 median.sweeping <- function(dat,group_col) {
+  require(plyr)
+  require(matrixStats)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]))
@@ -214,6 +239,7 @@ farms.method <- function(df){
 }
 
 farms.summary <- function(dat,group_col) {
+  require(plyr)
   dat.log = ddply(dat,colnames(dat)[group_col],
                       function(x) farms.method(x[,3:ncol(dat)]))
   
