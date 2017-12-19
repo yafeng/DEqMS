@@ -38,7 +38,7 @@ library(limma)
 The first two columns in input table should be peptide sequence and protein/gene names, intensity values for different samples start from 3rd columns. It is important the input file is arranged in this way.
 
 
-Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Yan Z. et al. Oncogene 2016).
+Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Yan Z. et al. Oncogene 2016). [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/27477696)
 
 ```{r}
 dat.psm = readRDS("./data/PXD004163.rds")
@@ -105,7 +105,7 @@ fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from
 ### 6. plot the fitted prior variance
 Check fitted relation between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, y is log pooled variances calculated for each gene.
 ```{r}
-plot.fit.curve(fit2,title="PXD004163", xlab="PSM count",type = "boxplot")
+plot.fit.curve(fit2,title="TMT10 dataset PXD004163", xlab="PSM count",type = "boxplot")
 ```
 
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png.pdf)
@@ -123,7 +123,8 @@ library(matrixStats)
 library(plyr)
 library(limma)
 ```
-### 2. Read input data and experimental design
+### 2. Read input data and experimental design.
+Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells.[Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565)
 ```{r}
 pepTable = readRDS("./data/PXD007725.rds")
 exp_design = read.table("experimental_design.txt",header = T,sep = "\t",stringsAsFactors = F)
@@ -134,7 +135,7 @@ exp_design = read.table("experimental_design.txt",header = T,sep = "\t",stringsA
 library(DEP)
 library(dplyr)
 
-pepTable[pepTable=0] <- NA
+pepTable[pepTable==0] <- NA # convert zero to NAs
 
 colnames(pepTable)[1:2] = c("name","ID")
 data_se <- make_se(pepTable, columns = 3:12, expdesign = exp_design)
