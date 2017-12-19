@@ -38,7 +38,7 @@ library(limma)
 The first two columns in input table should be peptide sequence and protein/gene names, intensity values for different samples start from 3rd columns. It is important the input file is arranged in this way.
 
 
-Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Yan Z. et al. Oncogene 2016). [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/27477696)
+Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Zhou Y et al. Oncogene 2016). [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/27477696)
 
 ```{r}
 dat.psm = readRDS("./data/PXD004163.rds")
@@ -108,7 +108,7 @@ Check fitted relation between piror variance and peptide/PSMs count works as exp
 plot.fit.curve(fit2,title="TMT10 dataset PXD004163", xlab="PSM count",type = "boxplot")
 ```
 
-![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png.pdf)
+![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png)
 
 ### 7. Output the results
 ```{r}
@@ -124,7 +124,7 @@ library(plyr)
 library(limma)
 ```
 ### 2. Read input data and experimental design.
-Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells.[Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565)
+Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells. (Pan D. et al 2017 Sci Rep) [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565)
 ```{r}
 pepTable = readRDS("./data/PXD007725.rds")
 exp_design = read.table("experimental_design.txt",header = T,sep = "\t",stringsAsFactors = F)
@@ -147,7 +147,7 @@ data_norm <- normalize_vsn(data_filt)
 plot_normalization(data_filt, data_norm)
 plot_detect(data_filt)
 
-data_imp <- impute(data_norm, fun = "QRILC")
+data_imp <- impute(data_norm, fun = "QRILC") # left-censored imputation method
 plot_imputation(data_norm, data_imp)
 ```
 
