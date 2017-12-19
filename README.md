@@ -127,7 +127,7 @@ library(limma)
 Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells. (Pan D. et al 2017 Sci Rep) [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565)
 ```{r}
 pepTable = readRDS("./data/PXD007725.rds")
-exp_design = read.table("experimental_design.txt",header = T,sep = "\t",stringsAsFactors = F)
+exp_design = read.table("./data/PXD007725_design.txt",header = T,sep = "\t",stringsAsFactors = F)
 ```
 
 ### 3. impute missing data using [DEP package](https://www.bioconductor.org/packages/devel/bioc/vignettes/DEP/inst/doc/DEP.html)
