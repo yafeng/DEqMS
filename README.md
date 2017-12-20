@@ -7,7 +7,7 @@ git clone https://github.com/yafeng/DEqMS
 or click green button (clone or download) choose Download ZIP, and unzip it.
 
 ## Introduction
-DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectra.count.eBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006). 
+DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectra.count.eBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 Outputs of `spectra.count.eBayes`:
 
 object is augmented form of "fit" object from `eBayes` in Limma, with the additions being:
@@ -22,7 +22,7 @@ object is augmented form of "fit" object from `eBayes` in Limma, with the additi
 
 `sca.postvar` - estimated posterior variance
 
-`nls.model` - fitted non-linear model
+`loess.model` - fitted model
 
 ## analyze TMT labelled dataset
 ### 1. load R packages
