@@ -34,8 +34,8 @@ library(limma)
 ```
 
 ### 2. Read input data and generate count table.
+Since the input data used in DEqMS is PSM or peptide level data, it is highly recommended to filter them based protein level 1% FDR. (Grouping PSMs or peptides usually generate larger list of protiens)
 The first two columns in input table should be peptide sequence and protein/gene names, intensity values for different samples start from 3rd columns. It is important the input file is arranged in this way.
-
 
 Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Zhou Y et al. Oncogene 2016). [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/27477696)
 
