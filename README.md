@@ -113,7 +113,7 @@ plot.fit.curve(fit2,title="TMT10 dataset PXD004163", xlab="PSM count",type = "bo
 ```{r}
 sca.results = output_result(fit2,coef_col=3)
 write.table(sca.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
-head(sca.results)
+head(sca.results,n=5)
 ```
 | logFC        | AveExpr      | t            | P.Value  | adj.P.Val   | B           | gene    | PSMcount | sca.t        | sca.P.Value | sca.adj.pval |
 |--------------|--------------|--------------|----------|-------------|-------------|---------|----------|--------------|-------------|--------------|
@@ -122,11 +122,6 @@ head(sca.results)
 | -1.241322465 | 0.072630242  | -18.20504475 | 3.39E-08 | 0.000156241 | 8.882911735 | TGFBR2  | 8        | -17.43066408 | 1.12E-09    | 3.42E-06     |
 | -0.78072293  | 0.007763848  | -13.13285085 | 5.22E-07 | 0.00096131  | 6.742716671 | PDCD4   | 40       | -14.34371369 | 9.75E-09    | 2.24E-05     |
 | -0.7976368   | -0.000657979 | -14.41697245 | 2.41E-07 | 0.000553767 | 7.388343266 | PHLPP2  | 8        | -12.7927884  | 3.42E-08    | 6.08E-05     |
-| -0.813249143 | -0.045980708 | -11.4070445  | 1.66E-06 | 0.001390801 | 5.728597971 | TRPS1   | 31       | -12.55092921 | 4.20E-08    | 6.08E-05     |
-| -0.569140349 | 0.000939733  | -11.93612791 | 1.15E-06 | 0.001390801 | 6.059352288 | RELA    | 32       | -12.44246582 | 4.62E-08    | 6.08E-05     |
-| 0.737880542  | -0.010509175 | 11.65027877  | 1.40E-06 | 0.001390801 | 5.882982396 | SLC2A3  | 17       | 12.06560758  | 6.45E-08    | 6.65E-05     |
-| -0.882279439 | -0.05620663  | -11.93454686 | 1.15E-06 | 0.001390801 | 6.058391462 | ZKSCAN1 | 10       | -12.05632374 | 6.50E-08    | 6.65E-05     |
-| -0.527854669 | -0.012419986 | -11.4954212  | 1.56E-06 | 0.001390801 | 5.78515935  | TBC1D2  | 26       | -11.63319568 | 9.55E-08    | 8.79E-05     |
 
 Column `logFC`, `AveExpr`, `t`, `P.Value`, `adj.P.Val`, `B` are values generated from Limma.
 Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced from `spectra.count.eBayes`, which takes into account the number of spectra/peptides used for quantification.
