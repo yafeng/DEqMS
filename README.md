@@ -45,8 +45,8 @@ dat.psm = readRDS("./data/PXD004163.rds")
 dat.psm.log = dat.psm
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
 
-count.table = as.data.frame(table(dat.psm$gene)) # generate count table
-rownames(count.table)=count.table$Var1
+psm.count.table = as.data.frame(table(dat.psm$gene)) # generate PSM count table
+rownames(psm.count.table)=psm.count.table$Var1
 ```
 ### 3. Generate sample annotation table.
 ```{r}
@@ -67,8 +67,8 @@ Here we show how to use different functions to summarize peptide data to protein
 
 1. use median sweeping method. [D'Angelo G et al JPR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28745510) , [Herbrich SM et al JPR 2013](https://www.ncbi.nlm.nih.gov/pubmed/23270375)
 ```{r}
-# median.sweep does equal median normalization for you automatically
-data.gene.nm = median.sweep(dat.psm.log,group_col = 2)
+# median.sweeping does equal median normalization for you automatically
+data.gene.nm = median.sweeping(dat.psm.log,group_col = 2)
 ```
 
 2. calculate ratio using control samples and then summarize to protein level by the median of all PSMs/Peptides.
@@ -98,7 +98,7 @@ gene.matrix = as.matrix(dat.gene.nm)
 design = model.matrix(~cond,sampleTable)
 
 fit1 <- eBayes(lmFit(gene.matrix,design))
-fit1$count <- count.table[names(fit1$sigma),]$Freq  # add PSM/peptide count values
+fit1$count <- psm.count.table[rownames(fit1$coefficients),2]  # add an attribute containing PSM/peptide count for each gene
 fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
 ### 6. plot the fitted prior variance
@@ -124,7 +124,7 @@ head(sca.results,n=5)
 | -0.7976368   | -0.000657979 | -14.41697245 | 2.41E-07 | 0.000553767 | 7.388343266 | PHLPP2  | 8        | -12.7927884  | 3.42E-08    | 6.08E-05     |
 
 Column `logFC`, `AveExpr`, `t`, `P.Value`, `adj.P.Val`, `B` are values generated from Limma.
-Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced from `spectra.count.eBayes`, which takes into account the number of spectra/peptides used for quantification.
+Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced from `spectra.count.eBayes`, which takes into account the number of quantified spectra/peptides.
 
 ## analyze label free dataset
 ### 1. load R packages
@@ -141,44 +141,29 @@ pepTable = readRDS("./data/PXD007725.rds")
 exp_design = read.table("./data/PXD007725_design.txt",header = T,sep = "\t",stringsAsFactors = F)
 ```
 
-### 3. impute missing data using [DEP package](https://www.bioconductor.org/packages/devel/bioc/vignettes/DEP/inst/doc/DEP.html)
+### 3. Filter peptides based on missing values (DEqMS requires minimum two observations in each condition)
 ```{r}
-library(DEP)
-library(dplyr)
+pepTable$cond1_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
+pepTable$cond2_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
 
-pepTable[pepTable==0] <- NA # convert zero to NAs
-
-colnames(pepTable)[1:2] = c("name","ID")
-data_se <- make_se(pepTable, columns = 3:12, expdesign = exp_design)
-plot_frequency(data_se)
-data_filt <- filter_missval(data_se, thr = 2)
-plot_frequency(data_filt)
-plot_numbers(data_filt)
-data_norm <- normalize_vsn(data_filt)
-plot_normalization(data_filt, data_norm)
-plot_detect(data_filt)
-
-data_imp <- impute(data_norm, fun = "QRILC") # left-censored imputation method
-plot_imputation(data_norm, data_imp)
+df.pep.filter =pepTable[pepTable$cond1_na_count<3 & pepTable$cond2_na_count <3,1:12]
 ```
+
+In our tests, imputing methods have negatively affects the statistical accuracy. Therefore, we don't impute missing values here.
 
 ### 4.  calculate ratio using control samples and then summarize to protein level by the median of all PSMs/Peptides.
 ```{r}
-imp.matrix = assays(data_imp)[[1]]
-imp.df  = as.data.frame(imp.matrix)
-imp.df$Sequence = rownames(imp.df)
-imp.df$Protein = df.peptide[imp.df$Sequence,]$Leading.razor.protein
-imp.df = imp.df[,c(11,12,1:10)]
+df.pep.log = df.pep.filter
+df.pep.log[,3:12] = log2(df.pep.log[,3:12])
 
-
-protein.df = median.summary(imp.df,group_col = 2,ref_col =8:12 )
+protein.df = median.summary(df.pep.log,group_col = 2,ref_col =8:12)
 protein.df.nm = equal.median.normalization(protein.df)
 ```
 ### 5. Differential expression analysis
 ```{r}
 protein.matrix = as.matrix(protein.df.nm)
 
-pep.count.table = as.data.frame(table(imp.df$Protein))
+pep.count.table = as.data.frame(table(protein.df.nm$Protein))
 rownames(pep.count.table) = pep.count.table$Var1
 
 cond = as.factor(exp_design$condition)
@@ -191,7 +176,7 @@ cont <- makeContrasts(AF-ANC, levels = design)
 fit2 = contrasts.fit(fit1,contrasts = cont)
 fit3 <- eBayes(fit2)
 
-fit3$count = pep.count.table[names(fit3$sigma),2]
+fit3$count = pep.count.table[rownames(fit3$coefficients),2]
 fit4 = spectra.count.eBayes(fit3,coef_col = 1)
 ```
 

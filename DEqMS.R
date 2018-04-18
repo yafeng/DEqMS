@@ -45,22 +45,14 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   numgenes<-length(logVAR[df>0])	
   df[df==0]<-NA
   eg<-logVAR-digamma(df/2)+log(df/2)
-  names(mdata$count) = names(mdata$sigma)
+  names(mdata$count) = rownames(mdata$coefficients)
   
   output<-mdata
   
-  if (fit.method == "loess"){
-    x=log2(mdata$count)
-    loess.model = loess(logVAR~x,span = 0.75)
-    y.pred = predict(loess.model)
-    output$loess.model = loess.model
-  }else if (fit.method == "nls"){
-    x=mdata$count
-    y=mdata$sigma^2
-    nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
-    y.pred = log(predict(nls.model))
-    output$nls.model = nls.model
-  }
+  x=log2(mdata$count)
+  loess.model = loess(logVAR~x,span = 0.75)
+  y.pred = predict(loess.model)
+  output$loess.model = loess.model
   
   egpred<-y.pred-digamma(df/2)+log(df/2)
   
@@ -83,8 +75,8 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   post.var<- (d0*s02 + df*mdata$sigma^2)/(d0+df)
   post.df<-d0+df
   # sca.t and scc.p stands for spectra count adjusted t and p values.  
-  sca.t<-mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var)) # divided by standard error
-  sca.p<-2*(1-pt(abs(sca.t),post.df))
+  sca.t<-as.matrix(mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
+  sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
   #print("P-values calculated")
   
   
@@ -100,19 +92,19 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
 output_result <-function(sca.fit,coef_col){
   results.table = topTable(sca.fit,coef = coef_col,n= Inf)
   
-  results.table$gene = row.names(results.table)
+  results.table$gene = rownames(results.table)
   results.table$PSMcount = sca.fit$count[results.table$gene]
   
-  results.table$sca.t = sca.fit$sca.t[results.table$gene]
-  results.table$sca.P.Value = sca.fit$sca.p[results.table$gene]
+  results.table$sca.t = sca.fit$sca.t[results.table$gene,coef_col]
+  results.table$sca.P.Value = sca.fit$sca.p[results.table$gene,coef_col]
   results.table$sca.adj.pval = p.adjust(results.table$sca.P.Value,method = "BH")
   results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plot.fit.curve <- function (fit,title="", xlab="peptide count",type = "scatterplot") {
+plot.fit.curve <- function (fit,title="", xlab="peptide count",type = "boxplot") {
   x = fit$count
   y = fit$sigma^2
-  model = fit$fit.model
+  model = fit$loess.model
   
   if (type=="scatterplot"){
     plot(log2(x),log(y),xlab = xlab,ylab="log(pooled variance)",main= title)
@@ -172,13 +164,13 @@ make.profile.plot <- function(dat){
 }
 
 
-median.summary <- function(dat,group_col,ref_col) {
+median.summary <- function(dat,group_col=2,ref_col) {
   require(plyr)
   
   dat.ratio = dat
-  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col])
+  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = T)
   dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
-                      function(x) colMedians(as.matrix(x[,3:ncol(dat)])))
+                      function(x) colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = T))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
   dat.new = dat.summary[,-1]
@@ -195,6 +187,7 @@ median_polish <- function (m) {
 
 medpolish.summary <- function(dat,group_col) {
   require(plyr)
+  
   dat.summary = ddply(dat,colnames(dat)[group_col],
                       function(x) median_polish(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
@@ -208,19 +201,19 @@ medpolish.summary <- function(dat,group_col) {
 
 equal.median.normalization <- function(dat) {
   require(matrixStats)
-  sizefactor = colMedians(as.matrix(dat))
+  sizefactor = colMedians(as.matrix(dat),na.rm = T)
   dat.nm = sweep(dat,2,sizefactor)
   return (dat.nm)
 }
 
-median.sweeping <- function(dat,group_col) {
+median.sweeping <- function(dat,group_col=2) {
   require(plyr)
   require(matrixStats)
   
   dat.ratio = dat
-  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]))
+  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = T)
   dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
-                      function(x) colMedians(as.matrix(x[,3:ncol(dat)])))
+                      function(x) colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = T))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
   dat.new = dat.summary[,-1]
@@ -246,7 +239,7 @@ farms.summary <- function(dat,group_col) {
   colnames(dat.log)[2:ncol(dat.log)]=colnames(dat)[3:ncol(dat)]
   
   dat.ratio = dat.log
-  dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]))
+  dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]),na.rm = T)
   
   dat.summary = dat.ratio[,-1]
   rownames(dat.summary) = dat.ratio[,1]
