@@ -1,5 +1,5 @@
 # DEqMS
-DEqMS is a tool for quantitative proteomic analysis, developped by Yafeng Zhu @ Karolinska Institutet. Manuscript in preparation.
+DEqMS is a tool for quantitative proteomic analysis, developed by Yafeng Zhu @ Karolinska Institutet. Manuscript in preparation.
 
 ## Installation
 git clone https://github.com/yafeng/DEqMS
@@ -143,9 +143,11 @@ exp_design = read.table("./data/PXD007725_design.txt",header = T,sep = "\t",stri
 
 ### 3. Filter peptides based on missing values (DEqMS requires minimum two observations in each condition)
 ```{r}
+pepTable[pepTable==0] <- NA
 pepTable$cond1_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
 pepTable$cond2_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
 
+#require missing values no more than 3 in each condition
 df.pep.filter =pepTable[pepTable$cond1_na_count<3 & pepTable$cond2_na_count <3,1:12]
 ```
 
