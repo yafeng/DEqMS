@@ -94,15 +94,30 @@ dat.gene = farms.summary(dat.psm,group_col = 2)
 dat.gene.nm = equal.median.normalization(dat.gene)
 ```
 
-### 5. Differential expression analysis
-Use the dataframe `dat.gene.nm` from Step 4 Summarization and Normalization as the input
+### 5. Differential gene expression analysis
+Use the dataframe `dat.gene.nm` from Step 4 Summarization and Normalization as the input.
 
+Since the genes in this data frame are aggregated from the PSM table, which has no FDR contorl at protein/gene level.
+it is recommended that the data frame `dat.gene.nm` is filtered according to a gene ID list with 1% FDR.
+
+```{r}
+##skip this if you just want to follow this tutorial
+genelist = read.table("example_genetable_0.01fdr.txt",header=T,sep="\t")
+data.gene.nm = dat.gene.nm[rownames(dat.gene.nm) %in% genelist$gene,]
+```
+contitnue to DEqMS analysis
 ```{r}
 gene.matrix = as.matrix(dat.gene.nm)
 design = model.matrix(~cond,sampleTable)
 
 fit1 <- eBayes(lmFit(gene.matrix,design))
 fit1$count <- psm.count.table[rownames(fit1$coefficients),2]  # add an attribute containing PSM/peptide count for each gene
+
+##check the values in the vector fit1$count
+##if min(fit1$count) return NA or 0, you should troubleshoot the error before you continue
+min(fit1$count)
+head(fit1$count)
+
 fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
 ### 6. plot the fitted prior variance
@@ -183,12 +198,18 @@ fit2 = contrasts.fit(fit1,contrasts = cont)
 fit3 <- eBayes(fit2)
 
 fit3$count = pep.count.table[rownames(fit3$coefficients),2]
+
+#check the values in the vector fit3$count
+#if min(fit3$count) return NA or 0, you should troubleshoot the error before you continue
+min(fit3$count)
+head(fit3$count)
+
 fit4 = spectra.count.eBayes(fit3,coef_col = 1)
 ```
 
 ### 6. plot the fitted prior variance
 ```{r}
-plot.loess.fit(fit4,title = "Label-free dataset PXD0007725",type = "boxplot")
+plot.loess.fit(fit4,type = "boxplot",title = "Label-free dataset PXD0007725",xlab="PSM count")
 ```
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD007725.png)
 

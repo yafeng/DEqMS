@@ -86,7 +86,7 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   output$sca.priorvar<-s02
   output$sca.dfprior<-d0
   
-  output
+  return (output)
 }
 
 output_result <-function(sca.fit,coef_col){
