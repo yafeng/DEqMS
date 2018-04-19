@@ -41,8 +41,10 @@ Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A
 
 ```{r}
 dat.psm = readRDS("./data/PXD004163.rds")
+dat.psm[dat.psm == 0] <- NA # convert 0 to NA
+dat.psm = na.omit(dat.psm) # remove rows with NAs
 
-dat.psm.log = dat.psm
+dat.psm.log = dat.psm # remove rows with NAs
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
 
 psm.count.table = as.data.frame(table(dat.psm$gene)) # generate PSM count table
@@ -60,7 +62,7 @@ cond = as.factor(cond)
 ```
 
 ### 4. Summarization and Normalization
-Here we show how to use different functions to summarize peptide data to protein level.
+Choose one of the following functions to summarize peptide data to protein level. (Recommend median sweeping method)
 
  `group_col` is the column number you want to group by, set 2 if genes/proteins are in second column.
 `ref_col`  is the columns where reference samples are.
@@ -71,13 +73,13 @@ Here we show how to use different functions to summarize peptide data to protein
 data.gene.nm = median.sweeping(dat.psm.log,group_col = 2)
 ```
 
-2. calculate ratio using control samples and then summarize to protein level by the median of all PSMs/Peptides.
+2. calculate relative ratio using control/reference channels as denominator and then summarize to protein level by the median of all PSMs/Peptides.
 ```{r}
 dat.gene = median.summary(dat.psm.log,group_col = 2, ref_col=c(3,7,10))
 dat.gene.nm = equal.median.normalization(dat.gene)
 ```
 
-3. sumarize using Tukey's median polish procedure
+3. summarize using Tukey's median polish procedure
 ```{r}
 dat.gene = medpolish.summary(dat.psm.log,group_col = 2)
 dat.gene.nm = equal.median.normalization(dat.gene)
@@ -93,6 +95,8 @@ dat.gene.nm = equal.median.normalization(dat.gene)
 ```
 
 ### 5. Differential expression analysis
+Use the dataframe `dat.gene.nm` from Step 4 Summarization and Normalization as the input
+
 ```{r}
 gene.matrix = as.matrix(dat.gene.nm)
 design = model.matrix(~cond,sampleTable)
