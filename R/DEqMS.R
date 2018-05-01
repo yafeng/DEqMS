@@ -100,7 +100,7 @@ output_result <-function(sca.fit,coef_col){
   results.table = topTable(sca.fit,coef = coef_col,n= Inf)
   
   results.table$gene = rownames(results.table)
-  results.table$PSMcount = sca.fit$count[results.table$gene]
+  results.table$count = sca.fit$count[results.table$gene]
   
   results.table$sca.t = sca.fit$sca.t[results.table$gene,coef_col]
   results.table$sca.P.Value = sca.fit$sca.p[results.table$gene,coef_col]
