@@ -49,10 +49,18 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   
   output<-mdata
   
-  x=log2(mdata$count)
-  loess.model = loess(logVAR~x,span = 0.75)
-  y.pred = predict(loess.model)
-  output$loess.model = loess.model
+  if (fit.method == "loess"){
+    x=log2(mdata$count)
+    loess.model = loess(logVAR~x,span = 0.75)
+    y.pred = predict(loess.model)
+    output$loess.model = loess.model
+    }else if (fit.method == "nls"){
+      x=mdata$count
+      y=mdata$sigma^2
+      nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
+      y.pred = log(predict(nls.model))
+      output$nls.model = nls.model
+    }
   
   egpred<-y.pred-digamma(df/2)+log(df/2)
   
@@ -79,7 +87,6 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
   #print("P-values calculated")
   
-  
   output$sca.t<-sca.t
   output$sca.p<-sca.p
   output$sca.postvar<-post.var
@@ -101,50 +108,50 @@ output_result <-function(sca.fit,coef_col){
   results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plot.fit.curve <- function (fit,title="", xlab="peptide count",type = "boxplot") {
+plot.fit.curve <- function (fit,main="", fit.method="nls",xlab="feature count",type = "boxplot") {
   x = fit$count
   y = fit$sigma^2
-  model = fit$loess.model
   
+  if (fit.method=="nls"){
+    model = fit$nls.model
+    
+    if (type=="scatterplot"){
+      plot(x,log(y),ylab="log(Variance)",main= main)
+      
+      y.pred <- log(predict(model))
+      k = order(x)
+      lines((x[k]),y.pred[k],col='red',lwd=3)
+      
+    }else if (type=="boxplot"){
+      df.temp = data.frame(pep_count =x, variance = y )
+      df.temp.filter = df.temp[df.temp$pep_count<21,]
+      boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
+              ylab = "log(Variance)", main=main)
+      
+      y.pred <- log(predict(model,data.frame(x=1:20)))
+      lines(1:20,y.pred,col='red',lwd=3)
+    }else{stop("only scatterplot and boxplot are supported")}
+    
+  }else if (fit.method=="loess"){
+    model = fit$loess.model
   if (type=="scatterplot"){
-    plot(log2(x),log(y),xlab = xlab,ylab="log(pooled variance)",main= title)
+    plot(x,log(y),ylab="log(Variance)",main= main)
     
     y.pred <- predict(model)
     k = order(x)
-    lines(log2(x[k]),y.pred[k],col='red',lwd=3)
-
+    lines((x[k]),y.pred[k],col='red',lwd=3)
+    
   }else if (type=="boxplot"){
     df.temp = data.frame(pep_count =x, variance = y )
     df.temp.filter = df.temp[df.temp$pep_count<21,]
     boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
-            ylab = "log(pooled.variance)", main=title)
+            ylab = "log(Variance)", main=main)
     
     y.pred <- predict(model,log2(1:20))
     lines(1:20,y.pred,col='red',lwd=3)
-  }else{
-    stop("only scatterplot and boxplot are supported")
-  }
+  }else{stop("only scatterplot and boxplot are supported")}
+  }  
 }
-
-LMM.fit <- function (dat, id.vars=1:2, cond) {
-  require(lme4)
-  
-  dat.unique <- dat[!duplicated(dat[,3:ncol(dat)])]
-  n =  nrow(dat.unique)
-  
-  if (n>1){
-    mf = melt(dat,id.vars = id.vars)
-    colnames(mf)[3:4] = c("Sample","Log.Intensity")
-    mf$condition = unlist(lapply(as.factor(cond),function (x) rep(x,n)))
-    
-    sample_size = length(cond)
-    mf$PSM = rep(1:n,times= sample_size)
-    mixed.model = lmer(Log.Intensity~condition+(1|PSM)+(1|Sample),data=mf)
-    
-    return (mixed.model)
-  }else{print ("only one peptide/PSM is not enough to fit mixed model")}
-}
-
 
 make.profile.plot <- function(dat){
   
@@ -166,6 +173,7 @@ make.profile.plot <- function(dat){
 
 median.summary <- function(dat,group_col=2,ref_col) {
   require(plyr)
+  require(matrixStats)
   
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = T)
@@ -185,7 +193,7 @@ median_polish <- function (m) {
   return (dat)
 }
 
-medpolish.summary <- function(dat,group_col) {
+medpolish.summary <- function(dat,group_col=2) {
   require(plyr)
   
   dat.summary = ddply(dat,colnames(dat)[group_col],

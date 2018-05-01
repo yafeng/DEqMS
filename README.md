@@ -220,7 +220,3 @@ write.table(AF.results,"AF.DEqMS.results.txt",sep = "\t",row.names = F,quote=F)
 ```
 ## Package vignette
 more functioanlities are in HTML vignette.  [Go to HTML vignette](https://yafeng.github.io/DEqMS/index.html)
-
-
-
-
