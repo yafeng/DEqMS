@@ -36,10 +36,6 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   #  University of Cincinnati, 2006
   ###########################################################################
   
-  
-  require("stats")
-  require("limma")
-  
   logVAR<-log(mdata$sigma^2)
   df<-mdata$df.residual
   numgenes<-length(logVAR[df>0])	
@@ -68,7 +64,7 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   
   mean.myfct<-mean(myfct,na.rm=TRUE)
   priordf<-vector(); testd0<-vector()
-  for (i in 1:(numgenes*10)) {
+  for (i in seq(1,numgenes*10)) {
     testd0[i]<-i/10
     priordf[i]= abs(mean.myfct-trigamma(testd0[i]/2))
     if (i>2) {
@@ -85,7 +81,6 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   # sca.t and scc.p stands for spectra count adjusted t and p values.  
   sca.t<-as.matrix(mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
   sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
-  #print("P-values calculated")
   
   output$sca.t<-sca.t
   output$sca.p<-sca.p
@@ -128,8 +123,8 @@ plot.fit.curve <- function (fit,main="", fit.method="nls",xlab="feature count",t
       boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
               ylab = "log(Variance)", main=main)
       
-      y.pred <- log(predict(model,data.frame(x=1:20)))
-      lines(1:20,y.pred,col='red',lwd=3)
+      y.pred <- log(predict(model,data.frame(x=seq(1,20))))
+      lines(seq(1,20),y.pred,col='red',lwd=3)
     }else{stop("only scatterplot and boxplot are supported")}
     
   }else if (fit.method=="loess"){
@@ -147,40 +142,35 @@ plot.fit.curve <- function (fit,main="", fit.method="nls",xlab="feature count",t
     boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
             ylab = "log(Variance)", main=main)
     
-    y.pred <- predict(model,log2(1:20))
-    lines(1:20,y.pred,col='red',lwd=3)
+    y.pred <- predict(model,log2(seq(1,20)))
+    lines(seq(1,20),y.pred,col='red',lwd=3)
   }else{stop("only scatterplot and boxplot are supported")}
   }  
 }
 
 make.profile.plot <- function(dat){
   
-  require(reshape2)
-  require(ggplot2)
-  
   colnames(dat)[1]="Peptide"
+  sample_size = ncol(dat)-2
   
-  m = melt(dat) 
-  m$PSM_id =  rep(1:nrow(dat),10)
-  ggplot(m, aes(x=variable,y=value))+
-    geom_point()+
-    geom_line(aes(group=PSM_id,col=Peptide))+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
-    ggtitle(dat[1,2])+
-    xlab("samples")+
-    ylab("log2 intensity")+
-    theme(plot.title = element_text(hjust = 0.5))
+  m = reshape2::melt(dat) 
+  m$PSM_id =  rep(seq(1,nrow(dat)),sample_size)
+  ggplot2::ggplot(m, aes(x=variable,y=value))+
+    ggplot2::geom_point()+
+    ggplot2::geom_line(aes(group=PSM_id,col=Peptide))+
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))+
+    ggplot2::ggtitle(dat[1,2])+
+    ggplot2::xlab("samples")+
+    ggplot2::ylab("log2 intensity")+
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 }
 
 
 median.summary <- function(dat,group_col=2,ref_col) {
-  require(plyr)
-  require(matrixStats)
-  
   dat.ratio = dat
-  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = T)
-  dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
-                      function(x) colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = T))
+  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = TRUE)
+  dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
+                      function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = TRUE))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
   dat.new = dat.summary[,-1]
@@ -190,15 +180,12 @@ median.summary <- function(dat,group_col=2,ref_col) {
 
 
 median_polish <- function (m) {
-  require(matrixStats)
-  dat = medpolish(m,trace.iter=FALSE)$col
+  dat = matrixStats::medpolish(m,trace.iter=FALSE)$col
   return (dat)
 }
 
 medpolish.summary <- function(dat,group_col=2) {
-  require(plyr)
-  
-  dat.summary = ddply(dat,colnames(dat)[group_col],
+  dat.summary = plyr::ddply(dat,colnames(dat)[group_col],
                       function(x) median_polish(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
@@ -210,20 +197,16 @@ medpolish.summary <- function(dat,group_col=2) {
 
 
 equal.median.normalization <- function(dat) {
-  require(matrixStats)
-  sizefactor = colMedians(as.matrix(dat),na.rm = T)
+  sizefactor = matrixStats::colMedians(as.matrix(dat),na.rm = TRUE)
   dat.nm = sweep(dat,2,sizefactor)
   return (dat.nm)
 }
 
 median.sweeping <- function(dat,group_col=2) {
-  require(plyr)
-  require(matrixStats)
-  
   dat.ratio = dat
-  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = T)
-  dat.summary = ddply(dat.ratio,colnames(dat)[group_col],
-                      function(x) colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = T))
+  dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - matrixStats::rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = TRUE)
+  dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
+                      function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = TRUE))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
   dat.new = dat.summary[,-1]
@@ -234,22 +217,20 @@ median.sweeping <- function(dat,group_col=2) {
 }
 
 farms.method <- function(df){
-  library(farms)
   if (nrow(df)==1){
     dat = log2(as.matrix(df))
-  }else {dat = generateExprVal.method.farms(as.matrix(na.omit(df)))$expr}
+  }else {dat = farms::generateExprVal.method.farms(as.matrix(na.omit(df)))$expr}
   return (dat)
 }
 
 farms.summary <- function(dat,group_col) {
-  require(plyr)
-  dat.log = ddply(dat,colnames(dat)[group_col],
+  dat.log = plyr::ddply(dat,colnames(dat)[group_col],
                       function(x) farms.method(x[,3:ncol(dat)]))
   
   colnames(dat.log)[2:ncol(dat.log)]=colnames(dat)[3:ncol(dat)]
   
   dat.ratio = dat.log
-  dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]),na.rm = T)
+  dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - matrixStats::rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]),na.rm = TRUE)
   
   dat.summary = dat.ratio[,-1]
   rownames(dat.summary) = dat.ratio[,1]

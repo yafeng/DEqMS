@@ -40,10 +40,9 @@ The Vignette is used to guide users to perform differential protein expression a
 ## 2 Installation
 
 ```{r,message=FALSE}
-source("../R/DEqMS.R")
+library(DEqMS)
 library(matrixStats)
 library(plyr)
-library(limma)
 ```
 
 ## 3 Differential protein expression analysis
@@ -54,7 +53,7 @@ we analyzed a protemoics dataset (TMT10plex labelling) in which A431 cells (huma
 Read a tabular input in which PSMs are in rows and samples are in columns.
 Intenisty values were log transformed since systematic effects and variance components are usually assumed to be additive on log scale (Oberg AL. et al JPR 2008; Hill EG. et al JPR 2008).
 ```{r,echo = TRUE}
-dat.psm = readRDS("../data/PXD004163.rds")
+dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
 colnames(dat.psm)[2] = "gene"
 dat.psm = na.omit(dat.psm)
 
@@ -246,10 +245,10 @@ plot(log2(x),log2(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",ylab="log2(Variance
 ### 4.2 Comparing p-values by different analysis.
 plotting top 500 genes ranked by p-values.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
-plot(sort(-log10(limma.results$P.Value),decreasing = T)[1:500], type="l",lty=2,lwd=2, ylab="-log10(p-value)",xlab="Proteins ranked by p-values",col="purple",ylim=c(0,9))
-lines(sort(-log10(DEqMS.results$sca.P.Value),decreasing = T)[1:500], lty=1,lwd=2,col="red")
-lines(sort(-log10(anova.results$P.Value),decreasing = T)[1:500], lty=2,lwd=2,col="blue")
-lines(sort(-log10(ttest.results$P.Value),decreasing = T)[1:500], lty=2,lwd=2,col="orange")
+plot(sort(-log10(limma.results$P.Value),decreasing = TRUE)[1:500], type="l",lty=2,lwd=2, ylab="-log10(p-value)",xlab="Proteins ranked by p-values",col="purple",ylim=c(0,9))
+lines(sort(-log10(DEqMS.results$sca.P.Value),decreasing = TRUE)[1:500], lty=1,lwd=2,col="red")
+lines(sort(-log10(anova.results$P.Value),decreasing = TRUE)[1:500], lty=2,lwd=2,col="blue")
+lines(sort(-log10(ttest.results$P.Value),decreasing = TRUE)[1:500], lty=2,lwd=2,col="orange")
 legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
 ```
 

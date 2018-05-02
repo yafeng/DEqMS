@@ -1,16 +1,16 @@
 Package: DEqMS
 Version: 0.99.0
-Date: 2018/05/01
+Date: 2018/05/02
 Title: Differential protein expression analysis for quantitative MS data
 Author: Yafeng Zhu
 Maintainer: Yafeng Zhu <yafeng.zhu@ki.se>
-Depends: R (>= 3.4.2), methods,limma
+Depends: R (>= 3.4.2),limma
 Suggests: plyr, stats, matrixStats, reshape2, ggplot2,farms, knitr
 LazyLoad: yes
 Description:  Data analysis, differential protein expression analysis for quantitative MS data.
 License: LGPL
-biocViews: Proteomics, Mass Spectrometry, Preprocessing, Statistics, DifferentialExpression, MultipleComparisons
+biocViews: Proteomics, MassSpectrometry, Preprocessing, DifferentialExpression, MultipleComparison,Normalization,Bayesian
 VignetteBuilder: knitr
-Packaged: Tue May 1 20:19:39 2018; yafeng
+Packaged: Tue May 2 18:25:00 2018; yafeng
 
 
