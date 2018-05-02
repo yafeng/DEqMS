@@ -158,11 +158,13 @@ make.profile.plot <- function(dat){
   require(reshape2)
   require(ggplot2)
   
+  colnames(dat)[1]="Peptide"
+  
   m = melt(dat) 
   m$PSM_id =  rep(1:nrow(dat),10)
   ggplot(m, aes(x=variable,y=value))+
     geom_point()+
-    geom_line(aes(group=PSM_id,col=Sequence))+
+    geom_line(aes(group=PSM_id,col=Peptide))+
     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
     ggtitle(dat[1,2])+
     xlab("samples")+

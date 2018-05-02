@@ -5,11 +5,12 @@ Title: Differential protein expression analysis for quantitative MS data
 Author: Yafeng Zhu
 Maintainer: Yafeng Zhu <yafeng.zhu@ki.se>
 Depends: R (>= 3.4.2), methods,limma
-Suggests: plyr, stats, matrixStats, reshape2, ggplot2,farms
+Suggests: plyr, stats, matrixStats, reshape2, ggplot2,farms, knitr
 LazyLoad: yes
 Description:  Data analysis, differential protein expression analysis for quantitative MS data.
 License: LGPL
 biocViews: Proteomics, Mass Spectrometry, Preprocessing, Statistics, DifferentialExpression, MultipleComparisons
+VignetteBuilder: knitr
 Packaged: Tue May 1 20:19:39 2018; yafeng
 
 
