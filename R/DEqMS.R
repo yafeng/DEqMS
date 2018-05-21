@@ -103,7 +103,7 @@ output_result <-function(sca.fit,coef_col){
   results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plot.fit.curve <- function (fit,main="", fit.method="nls",xlab="feature count",type = "boxplot") {
+plot.fit.curve <- function (fit,main="", fit.method="loess",xlab="feature count",type = "boxplot") {
   x = fit$count
   y = fit$sigma^2
   
@@ -148,7 +148,9 @@ plot.fit.curve <- function (fit,main="", fit.method="nls",xlab="feature count",t
   }  
 }
 
-make.profile.plot <- function(dat){
+make.profile.plot <- function(data,col=2,gene){
+  
+  dat = data[data[,col]==gene,]
   
   colnames(dat)[1]="Peptide"
   sample_size = ncol(dat)-2
