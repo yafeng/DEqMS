@@ -96,7 +96,7 @@ $$Y_{k,j} = median_{i\in protein\ k}\ y'_{i,j} $$
 
 Correction for differences in amounts of material loaded in the channels is then done by subtracting the channel median from the relative abundance (log2 ratio), normalizing all channels to have median zero.
 ```{r,echo=TRUE, fig.height=4, fig.width=7}
-dat.gene.nm = median.sweeping(dat.psm.log,group_col = 2)
+dat.gene.nm = medianSweeping(dat.psm.log,group_col = 2)
 
 boxplot(dat.gene.nm,xlab="TMT 10 channels",ylab="log2 relative protein abundance")
 ```
@@ -128,6 +128,7 @@ Anova analysis is equivalent to linear model analysis. The difference to Limma a
 Use `head(fit$coefficients)` to see effect size(fold change)  of genes for different conditions.
 
 ```{r,echo=TRUE}
+library(limma)
 gene.matrix = as.matrix(dat.gene.nm)
 colnames(gene.matrix) = as.character(sampleTable$cond)
 design = model.matrix(~cond,sampleTable)
@@ -197,14 +198,14 @@ Limma assumes same prior variance for all genes, the function `spectra.count.eBa
 ```{r,echo=TRUE}
 fit2$count = psm.count.table[names(fit2$sigma),]$Freq
 
-fit3 = spectra.count.eBayes(fit2,coef_col =1:4, fit.method = "loess")
-DEqMS.results = output_result(fit3,coef_col = 3)
+fit3 = spectraCounteBayes(fit2,coef_col =1:4, fit.method = "loess")
+DEqMS.results = outputResult(fit3,coef_col = 3)
 head(DEqMS.results)
 ```
 
 Check if the fitted variance ~ PMS count model is correct.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
-plot.fit.curve(fit3,fit.method = "loess",type = "boxplot",xlab="PSM count")
+plotFitCurve(fit3,type = "boxplot",xlab="PSM count")
 ```
 
 
@@ -258,8 +259,7 @@ legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple",
 ### 5.1 PSM/Peptide profile plot
 `make.profile.plot` function will plot log2 intensity of each PSM/peptide of the protein  in the input table.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
-m = dat.psm.log[dat.psm.log$gene=="TGFBR2",]
-make.profile.plot(m)
+peptideProfilePlot(data=dat.psm.log,col=2,gene="TGFBR2")
 ```
 
 ### 5.3 Volcano plot
