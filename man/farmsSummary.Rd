@@ -18,7 +18,6 @@
 
 }
 \examples{
-    library(DEqMS)
     dat.gene = farmsSummary(dat.pep,group_col=2)
 
 }

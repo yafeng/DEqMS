@@ -23,7 +23,6 @@
 
 }
 \examples{
-    library(DEqMS)
     fit2=spectraCounteBayes(fit1)	
     plotFitCurve(fit2,type="boxplot",xlab="peptide count")
 

@@ -18,7 +18,6 @@
 
 }
 \examples{
-    library(DEqMS)
     dat.gene = medpolishSummary(dat.pep,group_col=2)
 
 }

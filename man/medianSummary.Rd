@@ -20,7 +20,6 @@
 
 }
 \examples{
-    library(DEqMS)
     dat.gene = medianSummary(dat.pep,group_col=2,ref_col=3:5)
     dat.gene.nm = equalMedianNormalization(dat.gene)
 

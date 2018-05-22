@@ -17,7 +17,6 @@ equalMedianNormalization(data)
 
 }
 \examples{
-    Library(DEqMS)
     dat.gene.nm = equalMedianNormalization(dat.gene)
 
 }

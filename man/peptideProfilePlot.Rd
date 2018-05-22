@@ -20,7 +20,6 @@
 
 }
 \examples{
-    library(DEqMS)
     peptideProfilePlot(dat.pep,col=2,gene="TGFBR2")
 
 }

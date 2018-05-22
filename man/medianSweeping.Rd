@@ -18,7 +18,6 @@
 
 }
 \examples{
-    library(DEqMS)
     dat.gene = medianSweeping(dat.pep,group_col=2)
 
 }

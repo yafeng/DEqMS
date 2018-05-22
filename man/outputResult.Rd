@@ -23,7 +23,6 @@
 
 }
 \examples{
-    library(DEqMS)
     DEqMS.results = outputResult(fit, coef_col=1)
 
 }

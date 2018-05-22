@@ -29,7 +29,6 @@ additional attribute named count, which stored the peptide or PSM count quantifi
     This function adjusts the T-statistics and p-values for quantitative MS proteomics experiment according to the number of peptides/PSMs used for quantification. The method is similar in nature to intensity-based Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
-    library(DEqMS)
     #fit1 is an list object produced by Limma eBayes function.
     #Before running spectraCounteBayes function, add gene's peptide/spectra count to fit1
     fit1$count = pep.count.table[rownames(fit1$coefficients),"count"]
