@@ -127,9 +127,9 @@ peptideProfilePlot <- function(data,col=2,gene){
     
     m = reshape2::melt(dat) 
     m$PSM_id =  rep(seq(1,nrow(dat)),sample_size)
-    ggplot2::ggplot(m, aes(x=variable,y=value))+
+    ggplot2::ggplot(m, ggplot2::aes(x=variable,y=value))+
         ggplot2::geom_point()+
-        ggplot2::geom_line(aes(group=PSM_id,col=Peptide))+
+        ggplot2::geom_line(ggplot2::aes(group=PSM_id,col=Peptide))+
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))+
         ggplot2::ggtitle(dat[1,2])+
         ggplot2::xlab("samples")+
