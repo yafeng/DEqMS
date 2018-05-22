@@ -9,18 +9,18 @@ equalMedianNormalization(data)
 
 }
 \value{
-a data frame or matrix with normalized protein relative abundance
+    a data frame or matrix with normalized protein relative abundance
 }
 \description{
-This function is to normaliza out the differences of protein medians in different samples}
+    This function is to normaliza out the differences of protein medians in different samples}
 \details{
 
 }
 \examples{
-Library(DEqMS)
-dat.gene.nm = equalMedianNormalization(dat.gene)
+    Library(DEqMS)
+    dat.gene.nm = equalMedianNormalization(dat.gene)
 
 }
 \author{
-Yafeng Zhu
+    Yafeng Zhu
 }

@@ -2,7 +2,7 @@
 \alias{spectraCounteBayes}
 \title{Peptide/Spectra Count Based Empirical Bayes Statistics for Differential Expression}
 \usage{
-spectraCounteBayes(fit, fit.method="loess", ...)
+    spectraCounteBayes(fit, fit.method="loess", ...)
 }
 \arguments{
 \item{fit}{an list object produced by Limma eBayes function, it should have one
@@ -14,28 +14,27 @@ additional attribute named count, which stored the peptide or PSM count quantifi
 
 }
 \value{
-a list object with the additions being:
-  ##	sca.t	 - Spectra Count Adjusted posterior t-value
-  ##	sca.p	 - Spectra Count Adjusted posterior p-value
-  ##	sca.dfprior - Spectra Count Adjusted prior degrees of freedom
-  ##	sca.priorvar- Spectra Count Adjusted estimated prior variance
-  ##	sca.postvar - Spectra Count Adjusted posterior variance
-  ##loess.model - fitted loess model
+    a list object with the additional attributes being:
+        sca.t	 - Spectra Count Adjusted posterior t-value
+        sca.p	 - Spectra Count Adjusted posterior p-value
+        sca.dfprior - Spectra Count Adjusted prior degrees of freedom
+        sca.priorvar- Spectra Count Adjusted estimated prior variance
+        sca.postvar - Spectra Count Adjusted posterior variance
+        loess.model - fitted loess model
 }
 \description{
-This function is to calculate peptide/spectra count adjusted t-statistics, p-values.
+    This function is to calculate peptide/spectra count adjusted t-statistics, p-values.
 }
 \details{
-This function adjusts the T-statistics and p-values for quantitative MS proteomics experiment according to the number of peptides/PSMs used for quantification. The method is similar in nature to intensity-based Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
+    This function adjusts the T-statistics and p-values for quantitative MS proteomics experiment according to the number of peptides/PSMs used for quantification. The method is similar in nature to intensity-based Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
-Library(DEqMS)
-#fit1 is an list object produced by Limma eBayes function.
-#Before running spectraCounteBayes function, add gene's peptide/spectra count to fit1
-fit1$count = pep.count.table[rownames(fit1$coefficients),"count"]
-fit2= spectraCounteBayes(fit1)	
-
+    library(DEqMS)
+    #fit1 is an list object produced by Limma eBayes function.
+    #Before running spectraCounteBayes function, add gene's peptide/spectra count to fit1
+    fit1$count = pep.count.table[rownames(fit1$coefficients),"count"]
+    fit2= spectraCounteBayes(fit1)
 }
 \author{
-Yafeng Zhu
+    Yafeng Zhu
 }

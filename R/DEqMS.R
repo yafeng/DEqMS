@@ -47,7 +47,8 @@ spectraCounteBayes<-function(mdata,coef_col,fit.method="loess") {
     post.var<- (d0*s02 + df*mdata$sigma^2)/(d0+df)
     post.df<-d0+df
     # sca.t and scc.p stands for spectra count adjusted t and p values.  
-    sca.t<-as.matrix(mdata$coefficients[,coef_col]/(mdata$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
+    sca.t<-as.matrix(mdata$coefficients[,coef_col]/
+                         (mdata$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
     sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
     
     output$sca.t<-sca.t
@@ -71,7 +72,8 @@ outputResult <-function(sca.fit,coef_col){
     results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plotFitCurve <- function (fit,main="", fit.method="loess",xlab="feature count",type = "boxplot") {
+plotFitCurve <- function (fit,main="", fit.method="loess",
+                          xlab="feature count",type = "boxplot") {
     x = fit$count
     y = fit$sigma^2
     
@@ -138,9 +140,11 @@ peptideProfilePlot <- function(data,col=2,gene){
 
 medianSummary <- function(dat,group_col=2,ref_col) {
     dat.ratio = dat
-    dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = TRUE)
+    dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],
+                                                                 na.rm = TRUE)
     dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
-                              function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = TRUE))
+                              function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),
+                                                                  na.rm = TRUE))
     colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
     
     dat.new = dat.summary[,-1]
@@ -176,7 +180,8 @@ medianSweeping <- function(dat,group_col=2) {
     dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
         matrixStats::rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = TRUE)
     dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
-                              function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = TRUE))
+                              function(x) matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),
+                                                                  na.rm = TRUE))
     colnames(dat.summary)[2:ncol(dat.summary)] = colnames(dat)[3:ncol(dat)]
     
     dat.new = dat.summary[,-1]

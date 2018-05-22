@@ -2,7 +2,7 @@
 \alias{peptideProfilePlot}
 \title{plot log2 intensities of all peptides for one gene in different samples}
 \usage{
-peptideProfilePlot(data, col=2, gene)
+    peptideProfilePlot(data, col=2, gene)
 }
 \arguments{
 \item{data}{a data frame with peptide/psm log2 intensities}
@@ -14,16 +14,16 @@ peptideProfilePlot(data, col=2, gene)
 }
 
 \description{
-This function is to plot log2 intensities of all peptides for one gene in different samples.
+    This function is to plot log2 intensities of all peptides for one gene in different samples.
 }
 \details{
 
 }
 \examples{
-Library(DEqMS)
-peptideProfilePlot(dat.pep,col=2,gene="TGFBR2")
+    library(DEqMS)
+    peptideProfilePlot(dat.pep,col=2,gene="TGFBR2")
 
 }
 \author{
-Yafeng Zhu
+    Yafeng Zhu
 }

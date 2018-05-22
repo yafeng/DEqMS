@@ -2,7 +2,7 @@
 \alias{plotFitCurve}
 \title{plot the fitted prior variance against the number of quantified peptide/spectra}
 \usage{
-plotFitCurve(fit,type="boxplot",fit.method="loess",xlab="peptide count",main="")
+    plotFitCurve(fit,type="boxplot",fit.method="loess",xlab="peptide count",main="")
 }
 \arguments{
 \item{fit}{an list object produced by spectraCounteBayes function}
@@ -17,17 +17,17 @@ plotFitCurve(fit,type="boxplot",fit.method="loess",xlab="peptide count",main="")
 }
 
 \description{
-This function is to plot the fitted prior variance against the number of quantified peptide/spectra.
+    This function is to plot the fitted prior variance against the number of quantified peptide/spectra.
 }
 \details{
 
 }
 \examples{
-Library(DEqMS)
-fit2=spectraCounteBayes(fit1)	
-plotFitCurve(fit2,type="boxplot",xlab="peptide count")
+    library(DEqMS)
+    fit2=spectraCounteBayes(fit1)	
+    plotFitCurve(fit2,type="boxplot",xlab="peptide count")
 
 }
 \author{
-Yafeng Zhu
+    Yafeng Zhu
 }

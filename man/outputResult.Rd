@@ -2,7 +2,7 @@
 \alias{outputResult}
 \title{output the DEqMS analysis results in a data frame}
 \usage{
-outputResult(fit, coef_col=1, ...)
+    outputResult(fit, coef_col=1, ...)
 }
 \arguments{
 \item{fit}{an list object produced by spectraCounteBayes function}
@@ -11,22 +11,22 @@ outputResult(fit, coef_col=1, ...)
 
 }
 \value{
-a data frame object with the last three columns being:
-  ##	sca.t	 - Peptide or Spectra Count Adjusted posterior t-value
-  ##	sca.P.Value	- Adjusted posterior p-value
-  ##sca.adj - sca.P.Value adjusted by BH method
+    a data frame object with the last three columns being:
+        sca.t	 - Peptide or Spectra Count Adjusted posterior t-value
+        sca.P.Value	- Adjusted posterior p-value
+        sca.adj - sca.P.Value adjusted by BH method
 }
 \description{
-This function is to generate DEqMS outputs in a data frame.
+    This function is to generate DEqMS outputs in a data frame.
 }
 \details{
 
 }
 \examples{
-Library(DEqMS)
-DEqMS.results = outputResult(fit, coef_col=1)
+    library(DEqMS)
+    DEqMS.results = outputResult(fit, coef_col=1)
 
 }
 \author{
-Yafeng Zhu
+    Yafeng Zhu
 }
