@@ -1,16 +1,16 @@
-\name{spectra.count.eBayes}
-\alias{spectra.count.eBayes}
+\name{spectraCounteBayes}
+\alias{spectraCounteBayes}
 \title{Peptide/Spectra Count Based Empirical Bayes Statistics for Differential Expression}
 \usage{
-spectra.count.eBayes(fit, fit.method="loess", ...)
+spectraCounteBayes(fit, fit.method="loess", ...)
 }
 \arguments{
-\item{fit}{an list object produced by Limma eBayes function, it should at least have 
-attributes named sigma, count, df.residual, coefficients, and stdev.unscaled.}
+\item{fit}{an list object produced by Limma eBayes function, it should have one
+additional attribute named count, which stored the peptide or PSM count quantified for the gene in label-free or isobaric labelled data}
 
 \item{fit.method}{the method used to fit prior variance against the number of peptides. Two available methods: loess and nls. default loess.}
 
-\item{coef_col}{is an integer or vector indicating the column(s) of fit$coefficients for which the function is to be performed.}
+\item{coef_col}{an integer vector indicating the column(s) of fit$coefficients for which the function is to be performed.}
 
 }
 \value{
@@ -20,7 +20,7 @@ a list object with the additions being:
   ##	sca.dfprior - Spectra Count Adjusted prior degrees of freedom
   ##	sca.priorvar- Spectra Count Adjusted estimated prior variance
   ##	sca.postvar - Spectra Count Adjusted posterior variance
-  ##    loess.model - fitted loess model
+  ##loess.model - fitted loess model
 }
 \description{
 This function is to calculate peptide/spectra count adjusted t-statistics, p-values.
@@ -31,9 +31,9 @@ This function is to calculate peptide/spectra count adjusted t-statistics, p-val
 \examples{
 Library(DEqMS)
 #fit1 is an list object produced by Limma eBayes function.
+#Before running spectraCounteBayes function, add gene's peptide/spectra count to fit1
 fit1$count = pep.count.table[rownames(fit1$coefficients),"count"]
-#Before running spectra.count.eBayes function, add gene peptide/spectra count for fit1
-fit2=spectra.count.eBayes(fit1)	
+fit2= spectraCounteBayes(fit1)	
 
 }
 \author{

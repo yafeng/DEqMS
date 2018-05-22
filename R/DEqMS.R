@@ -1,4 +1,4 @@
-spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
+spectraCounteBayes<-function(mdata,coef_col,fit.method="loess") {
   
   ##########################################################################
   #  Functions used in DEqMS package to calculate spectra count adjusted p-values
@@ -91,7 +91,7 @@ spectra.count.eBayes<-function(mdata,coef_col,fit.method="loess") {
   return (output)
 }
 
-output_result <-function(sca.fit,coef_col){
+outputResult <-function(sca.fit,coef_col){
   results.table = topTable(sca.fit,coef = coef_col,n= Inf)
   
   results.table$gene = rownames(results.table)
@@ -103,7 +103,7 @@ output_result <-function(sca.fit,coef_col){
   results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plot.fit.curve <- function (fit,main="", fit.method="loess",xlab="feature count",type = "boxplot") {
+plotFitCurve <- function (fit,main="", fit.method="loess",xlab="feature count",type = "boxplot") {
   x = fit$count
   y = fit$sigma^2
   
@@ -148,7 +148,7 @@ plot.fit.curve <- function (fit,main="", fit.method="loess",xlab="feature count"
   }  
 }
 
-make.profile.plot <- function(data,col=2,gene){
+peptideProfilePlot <- function(data,col=2,gene){
   
   dat = data[data[,col]==gene,]
   
@@ -168,7 +168,7 @@ make.profile.plot <- function(data,col=2,gene){
 }
 
 
-median.summary <- function(dat,group_col=2,ref_col) {
+medianSummary <- function(dat,group_col=2,ref_col) {
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - rowMeans(dat.ratio[,ref_col],na.rm = TRUE)
   dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
@@ -181,14 +181,14 @@ median.summary <- function(dat,group_col=2,ref_col) {
 }
 
 
-median_polish <- function (m) {
+medianPolish <- function (m) {
   dat = matrixStats::medpolish(m,trace.iter=FALSE)$col
   return (dat)
 }
 
-medpolish.summary <- function(dat,group_col=2) {
+medpolishSummary <- function(dat,group_col=2) {
   dat.summary = plyr::ddply(dat,colnames(dat)[group_col],
-                      function(x) median_polish(as.matrix(x[,3:ncol(dat)])))
+                      function(x) medianPolish(as.matrix(x[,3:ncol(dat)])))
   colnames(dat.summary)[2:ncol(dat.summary)]=colnames(dat)[3:ncol(dat)]
   
   dat.new = dat.summary[,-1]
@@ -197,14 +197,13 @@ medpolish.summary <- function(dat,group_col=2) {
 }
 
 
-
-equal.median.normalization <- function(dat) {
+equalMedianNormalization <- function(dat) {
   sizefactor = matrixStats::colMedians(as.matrix(dat),na.rm = TRUE)
   dat.nm = sweep(dat,2,sizefactor)
   return (dat.nm)
 }
 
-median.sweeping <- function(dat,group_col=2) {
+medianSweeping <- function(dat,group_col=2) {
   dat.ratio = dat
   dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - matrixStats::rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = TRUE)
   dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
@@ -214,20 +213,20 @@ median.sweeping <- function(dat,group_col=2) {
   dat.new = dat.summary[,-1]
   rownames(dat.new) = dat.summary[,1]
   
-  dat.nm = equal.median.normalization(dat.new)
+  dat.nm = equalMedianNormalization(dat.new)
   return (dat.nm)
 }
 
-farms.method <- function(df){
+farmsMethod <- function(df){
   if (nrow(df)==1){
     dat = log2(as.matrix(df))
   }else {dat = farms::generateExprVal.method.farms(as.matrix(na.omit(df)))$expr}
   return (dat)
 }
 
-farms.summary <- function(dat,group_col) {
+farmsSummary <- function(dat,group_col) {
   dat.log = plyr::ddply(dat,colnames(dat)[group_col],
-                      function(x) farms.method(x[,3:ncol(dat)]))
+                      function(x) farmsMethod(x[,3:ncol(dat)]))
   
   colnames(dat.log)[2:ncol(dat.log)]=colnames(dat)[3:ncol(dat)]
   

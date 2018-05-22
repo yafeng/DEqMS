@@ -1,8 +1,8 @@
-\name{make.profile.plot}
-\alias{make.profile.plot}
-\title{plot log2 intensities of all peptides from one gene in different samples}
+\name{peptideProfilePlot}
+\alias{peptideProfilePlot}
+\title{plot log2 intensities of all peptides for one gene in different samples}
 \usage{
-make.profile.plot(data, col=2, gene)
+peptideProfilePlot(data, col=2, gene)
 }
 \arguments{
 \item{data}{a data frame with peptide/psm log2 intensities}
@@ -16,14 +16,14 @@ make.profile.plot(data, col=2, gene)
 
 }
 \description{
-This function is to plot log2 intensities of all peptides from one gene in different samples.
+This function is to plot log2 intensities of all peptides for one gene in different samples.
 }
 \details{
 
 }
 \examples{
 Library(DEqMS)
-make.profile.plot(dat.pep,col=2,gene="TGFBR2")
+peptideProfilePlot(dat.pep,col=2,gene="TGFBR2")
 
 }
 \author{

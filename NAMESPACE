@@ -1,5 +1,12 @@
-# All functions exported other than those starting with "."
-exportPattern("^[^\\.]")
+export("spectraCounteBayes")
+export("outputResult")
+export("plotFitCurve")
+export("peptideProfilePlot")
+export("medianSummary")
+export("medpolishSummary")
+export("equalMedianNormalization")
+export("medianSweeping")
+export("farmsSummary")
 
 importFrom("graphics", "boxplot", "lines", "plot")
 importFrom("limma,"topTable")

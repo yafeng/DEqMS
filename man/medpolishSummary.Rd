@@ -1,8 +1,8 @@
-\name{medpolish.summary}
-\alias{medpolish.summary}
+\name{medpolishSummary}
+\alias{medpolishSummary}
 \title{summarize peptide/PSM intensity into protein level relative abundance estimate by Turkey median polish procedure}
 \usage{
-medpolish.summary(data,group_col=2)
+medpolishSummary(data,group_col=2)
 }
 \arguments{
 \item{data}{an data frame containing peptide/psm intensities in log2 scale}
@@ -19,7 +19,7 @@ This function is to calculate proteins'relative abundance by Turkey median polis
 }
 \examples{
 Library(DEqMS)
-dat.gene = medpolish(dat.pep,group_col=2)
+dat.gene = medpolishSummary(dat.pep,group_col=2)
 
 }
 \author{
