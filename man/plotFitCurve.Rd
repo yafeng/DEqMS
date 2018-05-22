@@ -15,9 +15,7 @@ plotFitCurve(fit,type="boxplot",fit.method="loess",xlab="peptide count",main="")
 
 \item{main}{the title for the figure}
 }
-\value{
 
-}
 \description{
 This function is to plot the fitted prior variance against the number of quantified peptide/spectra.
 }

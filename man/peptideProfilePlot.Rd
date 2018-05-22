@@ -12,9 +12,7 @@ peptideProfilePlot(data, col=2, gene)
 \item{gene}{an character indicates the gene name/id to be plotted}
 
 }
-\value{
 
-}
 \description{
 This function is to plot log2 intensities of all peptides for one gene in different samples.
 }

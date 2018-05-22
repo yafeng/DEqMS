@@ -26,7 +26,7 @@ a list object with the additions being:
 This function is to calculate peptide/spectra count adjusted t-statistics, p-values.
 }
 \details{
-
+This function adjusts the T-statistics and p-values for quantitative MS proteomics experiment according to the number of peptides/PSMs used for quantification. The method is similar in nature to intensity-based Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
 Library(DEqMS)
