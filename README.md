@@ -7,8 +7,8 @@ git clone https://github.com/yafeng/DEqMS
 or click green button (clone or download) choose Download ZIP, and unzip it.
 
 ## Introduction
-DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectra.count.eBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
-Outputs of `spectra.count.eBayes`:
+DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectraCounteBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
+Outputs of `spectraCounteBayes`:
 
 object is augmented form of "fit" object from `eBayes` in Limma, with the additions being:
 
@@ -27,10 +27,7 @@ object is augmented form of "fit" object from `eBayes` in Limma, with the additi
 ## analyze TMT labelled dataset
 ### 1. load R packages
 ```{r}
-source("DEqMS.R")
-library(matrixStats)
-library(plyr)
-library(limma)
+library(DEqMS)
 ```
 
 ### 2. Read input data and generate count table.
@@ -69,20 +66,20 @@ Choose one of the following functions to summarize peptide data to protein level
 
 1. use median sweeping method. [D'Angelo G et al JPR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28745510) , [Herbrich SM et al JPR 2013](https://www.ncbi.nlm.nih.gov/pubmed/23270375)
 ```{r}
-# median.sweeping does equal median normalization for you automatically
-data.gene.nm = median.sweeping(dat.psm.log,group_col = 2)
+# medianSweeping does equal median normalization in the end
+data.gene.nm = medianSweeping(dat.psm.log,group_col = 2)
 ```
 
 2. calculate relative ratio using control/reference channels as denominator and then summarize to protein level by the median of all PSMs/Peptides.
 ```{r}
-dat.gene = median.summary(dat.psm.log,group_col = 2, ref_col=c(3,7,10))
-dat.gene.nm = equal.median.normalization(dat.gene)
+dat.gene = medianSummary(dat.psm.log,group_col = 2, ref_col=c(3,7,10))
+dat.gene.nm = equalMedianNormalization(dat.gene)
 ```
 
 3. summarize using Tukey's median polish procedure
 ```{r}
-dat.gene = medpolish.summary(dat.psm.log,group_col = 2)
-dat.gene.nm = equal.median.normalization(dat.gene)
+dat.gene = medpolishSummary(dat.psm.log,group_col = 2)
+dat.gene.nm = equalMedianNormalization(dat.gene)
 ```
 
 4. use Factor Analysis for Robust Microarray Summarization (FARMS)
@@ -90,8 +87,8 @@ see [Hochreiter S et al Bioinformatic 2007](http://bioinformatics.oxfordjournals
 ```{r}
 # input is psm raw intensity, not log transformed values
 
-dat.gene = farms.summary(dat.psm,group_col = 2)
-dat.gene.nm = equal.median.normalization(dat.gene)
+dat.gene = farmsSummary(dat.psm,group_col = 2)
+dat.gene.nm = equalMedianNormalization(dat.gene)
 ```
 
 ### 5. Differential gene expression analysis
@@ -118,19 +115,19 @@ fit1$count <- psm.count.table[rownames(fit1$coefficients),2]  # add an attribute
 min(fit1$count)
 head(fit1$count)
 
-fit2 = spectra.count.eBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
+fit2 = spectraCounteBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
 ```
 ### 6. plot the fitted prior variance
 Check fitted relation between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, y is log pooled variances calculated for each gene.
 ```{r}
-plot.fit.curve(fit2,title="TMT10 dataset PXD004163", xlab="PSM count",type = "boxplot")
+plotFitCurve(fit2,main="TMT10 dataset PXD004163", xlab="PSM count",type = "boxplot")
 ```
 
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png)
 
 ### 7. Output the results
 ```{r}
-sca.results = output_result(fit2,coef_col=3)
+sca.results = outpuResult(fit2,coef_col=3)
 write.table(sca.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
 head(sca.results,n=5)
 ```
@@ -148,10 +145,7 @@ Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced
 ## analyze label free dataset
 ### 1. load R packages
 ```{r}
-source("DEqMS.R")
-library(matrixStats)
-library(plyr)
-library(limma)
+library(DEqMS)
 ```
 ### 2. Read input data and experimental design.
 Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells. (Pan D. et al 2017 Sci Rep) [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565). The data was searched by MaxQuant Software and the output file "peptides.txt" was used here. (The column "Leading razor protein" in peptides.txt table was extracted as Protein column here).
@@ -177,8 +171,8 @@ In our tests, imputing methods have negatively affects the statistical accuracy.
 df.pep.log = df.pep.filter
 df.pep.log[,3:12] = log2(df.pep.log[,3:12])
 
-protein.df = median.summary(df.pep.log,group_col = 2,ref_col =8:12)
-protein.df.nm = equal.median.normalization(protein.df)
+protein.df = medianSummary(df.pep.log,group_col = 2,ref_col =8:12)
+protein.df.nm = equalMedianNormalization(protein.df)
 ```
 ### 5. Differential expression analysis
 ```{r}
@@ -209,13 +203,13 @@ fit4 = spectra.count.eBayes(fit3,coef_col = 1)
 
 ### 6. plot the fitted prior variance
 ```{r}
-plot.loess.fit(fit4,type = "boxplot",title = "Label-free dataset PXD0007725",xlab="PSM count")
+plotFitCurve(fit4,type = "boxplot",main = "Label-free dataset PXD0007725",xlab="peptide count")
 ```
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD007725.png)
 
 ### 7. Output the results
 ```{r}
-AF.results = output_result(fit4,coef_col = 1)
+AF.results = outputResult(fit4,coef_col = 1)
 write.table(AF.results,"AF.DEqMS.results.txt",sep = "\t",row.names = F,quote=F)
 ```
 ## Package vignette
