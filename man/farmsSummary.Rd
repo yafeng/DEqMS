@@ -2,10 +2,10 @@
 \alias{farmsSummary}
 \title{summarize peptide/PSM intensity into protein level relative abundance by factor analysis}
 \usage{
-    farmsSummary(data,group_col=2)
+    farmsSummary(dat,group_col=2)
 }
 \arguments{
-\item{data}{an data frame with original peptide/psm intensities (not log transformed)}
+\item{dat}{an data frame with original peptide/psm intensities (not log transformed)}
 
 \item{group_col}{the column by which peptides/psm intensity are grouped. Usually it is the gene/protein column. Default is 2}
 }
@@ -18,6 +18,8 @@
 
 }
 \examples{
+    dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+    dat.pep[dat.pep==0] <- NA
     dat.gene = farmsSummary(dat.pep,group_col=2)
 
 }

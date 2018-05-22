@@ -2,7 +2,7 @@
 \alias{outputResult}
 \title{output the DEqMS analysis results in a data frame}
 \usage{
-    outputResult(fit, coef_col=1, ...)
+    outputResult(fit, coef_col=1)
 }
 \arguments{
 \item{fit}{an list object produced by spectraCounteBayes function}
@@ -23,7 +23,37 @@
 
 }
 \examples{
-    DEqMS.results = outputResult(fit, coef_col=1)
+        dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+    dat.pep[dat.pep==0] <- NA
+    
+    dat.pep$cond1_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[3:7])))
+    dat.pep$cond2_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[8:12])))
+
+    #require minimum two observations in each condition
+    dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & dat.pep$cond2_na_count <3,1:12]
+    
+    dat.pep.log = dat.pep.filter
+    dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
+    
+    dat.gene.nm = medianSweeping(dat.pep,group_col=2)
+    
+    pep.count.table = as.data.frame(table(dat.gene.nm$Protein))
+    
+    cond = as.factor(c(rep("AF",5),rep("ANC",5)))
+    design = model.matrix(~0+cond) # fitting without intercept
+    colnames(design) = c("AF","ANC")
+    
+    protein.matrix = as.matrix(dat.gene.nm)
+    
+    fit1 = lmFit(protein.matrix,design = design)
+    cont <- makeContrasts(AF-ANC, levels = design)
+    fit2 = contrasts.fit(fit1,contrasts = cont)
+    fit3 <- eBayes(fit2)
+
+    fit3$count = pep.count.table[rownames(fit3$coefficients),2]
+    fit4 = spectraCounteBayes(fit3)
+    
+    DEqMS.results = outputResult(fit4, coef_col=1)
 
 }
 \author{

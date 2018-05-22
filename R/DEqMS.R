@@ -1,26 +1,26 @@
-spectraCounteBayes<-function(mdata,coef_col,fit.method="loess") {
+spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     
     ###########################################################################
     #  The function was adapted from:
     #  Function for IBMT (Intensity-based Moderated T-statistic) Written by Maureen Sartor
     #  University of Cincinnati, 2006
     ###########################################################################
-    logVAR<-log(mdata$sigma^2)
-    df<-mdata$df.residual
+    logVAR<-log(fit$sigma^2)
+    df<-fit$df.residual
     numgenes<-length(logVAR[df>0])	
     df[df==0]<-NA
     eg<-logVAR-digamma(df/2)+log(df/2)
-    names(mdata$count) = rownames(mdata$coefficients)
-    output<-mdata
+    names(fit$count) = rownames(fit$coefficients)
+    output<-fit
   
     if (fit.method == "loess"){
-        x=log2(mdata$count)
+        x=log2(fit$count)
         loess.model = loess(logVAR~x,span = 0.75)
         y.pred = predict(loess.model)
         output$loess.model = loess.model
     }else if (fit.method == "nls"){
-        x=mdata$count
-        y=mdata$sigma^2
+        x=fit$count
+        y=fit$sigma^2
         nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
         y.pred = log(predict(nls.model))
         output$nls.model = nls.model
@@ -44,11 +44,11 @@ spectraCounteBayes<-function(mdata,coef_col,fit.method="loess") {
     
     s02<-exp(egpred + digamma(d0/2) - log(d0/2))
     
-    post.var<- (d0*s02 + df*mdata$sigma^2)/(d0+df)
+    post.var<- (d0*s02 + df*fit$sigma^2)/(d0+df)
     post.df<-d0+df
     # sca.t and scc.p stands for spectra count adjusted t and p values.  
-    sca.t<-as.matrix(mdata$coefficients[,coef_col]/
-                         (mdata$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
+    sca.t<-as.matrix(fit$coefficients[,coef_col]/
+                         (fit$stdev.unscaled[,coef_col]*sqrt(post.var))) # divided by standard error
     sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
     
     output$sca.t<-sca.t
@@ -60,20 +60,20 @@ spectraCounteBayes<-function(mdata,coef_col,fit.method="loess") {
     return (output)
 }
 
-outputResult <-function(sca.fit,coef_col){
-    results.table = topTable(sca.fit,coef = coef_col,n= Inf)
+outputResult <-function(fit,coef_col){
+    results.table = topTable(fit,coef = coef_col,n= Inf)
     
     results.table$gene = rownames(results.table)
-    results.table$count = sca.fit$count[results.table$gene]
+    results.table$count = fit$count[results.table$gene]
     
-    results.table$sca.t = sca.fit$sca.t[results.table$gene,coef_col]
-    results.table$sca.P.Value = sca.fit$sca.p[results.table$gene,coef_col]
+    results.table$sca.t = fit$sca.t[results.table$gene,coef_col]
+    results.table$sca.P.Value = fit$sca.p[results.table$gene,coef_col]
     results.table$sca.adj.pval = p.adjust(results.table$sca.P.Value,method = "BH")
     results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plotFitCurve <- function (fit,main="", fit.method="loess",
-                          xlab="feature count",type = "boxplot") {
+plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
+                          xlab="feature count",main="") {
     x = fit$count
     y = fit$sigma^2
     
@@ -118,15 +118,15 @@ plotFitCurve <- function (fit,main="", fit.method="loess",
     }  
 }
 
-peptideProfilePlot <- function(data,col=2,gene){
+peptideProfilePlot <- function(dat,col=2,gene){
     
-    dat = data[data[,col]==gene,]
+    dat.sub = dat[dat[,col]==gene,]
     
-    colnames(dat)[1]="Peptide"
-    sample_size = ncol(dat)-2
+    colnames(dat.sub)[1]="Peptide"
+    sample_size = ncol(dat.sub)-2
     
-    m = reshape2::melt(dat) 
-    m$PSM_id =  rep(seq(1,nrow(dat)),sample_size)
+    m = reshape2::melt(dat.sub) 
+    m$PSM_id =  rep(seq(1,nrow(dat.sub)),sample_size)
     ggplot2::ggplot(m, ggplot2::aes(x=variable,y=value))+
         ggplot2::geom_point()+
         ggplot2::geom_line(ggplot2::aes(group=PSM_id,col=Peptide))+

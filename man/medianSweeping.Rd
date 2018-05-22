@@ -2,10 +2,10 @@
 \alias{medianSweeping}
 \title{summarize peptide/PSM intensity into protein level relative abundance estimate by median sweeping method}
 \usage{
-    medianSweeping(data,group_col=2)
+    medianSweeping(dat,group_col=2)
 }
 \arguments{
-\item{data}{an data frame with peptide/PSM intensities in log2 scale}
+\item{dat}{an data frame with peptide/PSM intensities in log2 scale}
 
 \item{group_col}{the column by which peptides/PSM intensity are grouped. Usually the gene/protein column. Default is 2}
 }
@@ -18,7 +18,11 @@
 
 }
 \examples{
-    dat.gene = medianSweeping(dat.pep,group_col=2)
+    dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+    dat.pep[dat.pep==0] <- NA
+    dat.pep.log = dat.pep
+    dat.pep.log[,3:12] = log2(dat.pep[,3:12])
+    dat.gene.nm = medianSweeping(dat.pep,group_col=2)
 
 }
 \author{

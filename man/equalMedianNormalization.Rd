@@ -2,10 +2,10 @@
 \alias{equalMedianNormalization}
 \title{normalize to have equal medians in all samples}
 \usage{
-equalMedianNormalization(data)
+equalMedianNormalization(dat)
 }
 \arguments{
-\item{data}{an numeric data frame or matrix containing protein relative abundance in log2 scale}
+\item{dat}{an numeric data frame or matrix containing protein relative abundance in log2 scale}
 
 }
 \value{
@@ -17,6 +17,11 @@ equalMedianNormalization(data)
 
 }
 \examples{
+    dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+    dat.pep[dat.pep==0] <- NA
+    dat.pep.log = dat.pep
+    dat.pep.log[,3:12] = log2(dat.pep[,3:12])
+    dat.gene = medianSummary(df.pep.log,group_col = 2,ref_col =8:12)
     dat.gene.nm = equalMedianNormalization(dat.gene)
 
 }

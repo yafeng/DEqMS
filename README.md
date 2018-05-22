@@ -41,7 +41,7 @@ dat.psm = readRDS("./data/PXD004163.rds")
 dat.psm[dat.psm == 0] <- NA # convert 0 to NA
 dat.psm = na.omit(dat.psm) # remove rows with NAs
 
-dat.psm.log = dat.psm # remove rows with NAs
+dat.psm.log = dat.psm
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
 
 psm.count.table = as.data.frame(table(dat.psm$gene)) # generate PSM count table
@@ -158,7 +158,7 @@ exp_design = read.table("./data/PXD007725_design.txt",header = T,sep = "\t",stri
 ```{r}
 pepTable[pepTable==0] <- NA
 pepTable$cond1_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
-pepTable$cond2_na_count  = apply(pepTable,1, function(x) sum(is.na(x[3:7])))
+pepTable$cond2_na_count  = apply(pepTable,1, function(x) sum(is.na(x[8:12])))
 
 #require missing values no more than 3 in each condition
 df.pep.filter =pepTable[pepTable$cond1_na_count<3 & pepTable$cond2_na_count <3,1:12]
@@ -198,7 +198,7 @@ fit3$count = pep.count.table[rownames(fit3$coefficients),2]
 min(fit3$count)
 head(fit3$count)
 
-fit4 = spectra.count.eBayes(fit3,coef_col = 1)
+fit4 = spectraCounteBayes(fit3)
 ```
 
 ### 6. plot the fitted prior variance
