@@ -73,7 +73,7 @@ outputResult <-function(fit,coef_col){
 }
 
 plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
-                          xlab="feature count",main="") {
+                          xlab="peptide count",main="") {
     x = fit$count
     y = fit$sigma^2
     
@@ -198,7 +198,7 @@ farmsMethod <- function(df){
     return (dat)
 }
 
-farmsSummary <- function(dat,group_col) {
+farmsSummary <- function(dat,group_col=2) {
     dat.log = plyr::ddply(dat,colnames(dat)[group_col],
                           function(x) farmsMethod(x[,3:ncol(dat)]))
     

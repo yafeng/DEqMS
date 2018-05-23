@@ -20,7 +20,7 @@
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA
-    dat.gene = farmsSummary(dat.pep,group_col=2)
+    dat.gene = farmsSummary(na.omit(dat.pep),group_col=2) # farms method does not tolerate missing values
 
 }
 \author{
