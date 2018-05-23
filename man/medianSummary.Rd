@@ -24,7 +24,7 @@
     dat.pep[dat.pep==0] <- NA
     dat.pep.log = dat.pep
     dat.pep.log[,3:12] = log2(dat.pep[,3:12])
-    dat.gene = medianSummary(dat.pep,group_col=2,ref_col=3:5)
+    dat.gene = medianSummary(dat.pep.log,group_col=2,ref_col=3:5)
     dat.gene.nm = equalMedianNormalization(dat.gene)
 
 }

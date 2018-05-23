@@ -22,7 +22,7 @@
     dat.pep[dat.pep==0] <- NA
     dat.pep.log = dat.pep
     dat.pep.log[,3:12] = log2(dat.pep[,3:12])
-    dat.gene.nm = medianSweeping(dat.pep,group_col=2)
+    dat.gene.nm = medianSweeping(dat.pep.log,group_col=2)
 
 }
 \author{

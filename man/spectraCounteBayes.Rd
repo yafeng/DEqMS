@@ -41,7 +41,7 @@ additional attribute named count, which stored the peptide or PSM count quantifi
     dat.pep.log = dat.pep.filter
     dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
     
-    dat.gene.nm = medianSweeping(dat.pep,group_col=2)
+    dat.gene.nm = medianSweeping(dat.pep.log,group_col=2)
     
     pep.count.table = as.data.frame(table(dat.gene.nm$Protein))
     

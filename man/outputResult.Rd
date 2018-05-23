@@ -23,7 +23,7 @@
 
 }
 \examples{
-        dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+    dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA
     
     dat.pep$cond1_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[3:7])))
@@ -35,12 +35,12 @@
     dat.pep.log = dat.pep.filter
     dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
     
-    dat.gene.nm = medianSweeping(dat.pep,group_col=2)
+    dat.gene.nm = medianSweeping(dat.pep.log,group_col=2)
     
     pep.count.table = as.data.frame(table(dat.gene.nm$Protein))
     
     cond = as.factor(c(rep("AF",5),rep("ANC",5)))
-    design = model.matrix(~0+cond) # fitting without intercept
+    design = model.matrix(~0+cond) # without intercept
     colnames(design) = c("AF","ANC")
     
     protein.matrix = as.matrix(dat.gene.nm)
