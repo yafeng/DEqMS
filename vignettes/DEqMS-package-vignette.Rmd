@@ -259,7 +259,7 @@ legend("topright",legend = c("limma","DEqMS","Anova","t.test"),col = c("purple",
 ### 5.1 PSM/Peptide profile plot
 `make.profile.plot` function will plot log2 intensity of each PSM/peptide of the protein  in the input table.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
-peptideProfilePlot(data=dat.psm.log,col=2,gene="TGFBR2")
+peptideProfilePlot(dat=dat.psm.log,col=2,gene="TGFBR2")
 ```
 
 ### 5.3 Volcano plot
