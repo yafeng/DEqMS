@@ -154,7 +154,7 @@ medianSummary <- function(dat,group_col=2,ref_col) {
 
 
 medianPolish <- function (m) {
-    dat = matrixStats::medpolish(m,trace.iter=FALSE)$col
+    dat = medpolish(m,trace.iter=FALSE)$col
     return (dat)
 }
 
