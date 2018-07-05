@@ -20,8 +20,8 @@
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA
-    dat.pep.log = dat.pep
-    dat.pep.log[,3:12] = log2(dat.pep[,3:12])
+    dat.pep.log = na.omit(dat.pep)
+    dat.pep.log[,3:12] = log2(dat.pep.log[,3:12])
     dat.gene = medpolishSummary(dat.pep.log,group_col=2)
 
 }

@@ -19,6 +19,10 @@
 \description{
     This function is to plot the fitted prior variance against the number of quantified peptide/spectra.
 }
+
+\value{
+    return a plot graphic
+}
 \details{
 
 }

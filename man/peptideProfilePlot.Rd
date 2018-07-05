@@ -16,8 +16,8 @@
 \description{
     This function is to plot log2 intensities of all peptides for one gene in different samples.
 }
-\details{
-
+\value{
+    return a ggplot2 object
 }
 \examples{
     dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
