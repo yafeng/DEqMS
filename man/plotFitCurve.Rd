@@ -40,7 +40,8 @@
     dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
     
     dat.gene.nm = medianSweeping(dat.pep.log,group_col=2)
-    pep.count.table = as.data.frame(table(dat.gene.nm$Protein))
+    pep.count.table = as.data.frame(table(dat.pep.log$Leading.razor.protein))
+    rownames(pep.count.table) = pep.count.table$Var1
     
     cond = as.factor(c(rep("AF",5),rep("ANC",5)))
     design = model.matrix(~0+cond) # fitting without intercept
