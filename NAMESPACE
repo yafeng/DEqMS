@@ -10,4 +10,4 @@ export("farmsSummary")
 
 importFrom("graphics", "boxplot", "lines", "plot")
 importFrom("limma","topTable")
-importFrom("stats", "loess", "na.omit", "nls", "p.adjust", "predict", "pt")
+importFrom("stats", "loess", "na.omit", "nls", "p.adjust", "predict", "pt","medpolish")
