@@ -5,14 +5,16 @@
 equalMedianNormalization(dat)
 }
 \arguments{
-\item{dat}{an numeric data frame or matrix containing protein relative abundance in log2 scale}
+\item{dat}{an numeric data frame or matrix containing protein relative 
+abundance in log2 scale}
 
 }
 \value{
 a data frame or matrix with normalized protein relative abundance
 }
 \description{
-This function is to normaliza out the differences of protein medians in different samples}
+This function is to normaliza out the differences of protein medians in 
+different samples}
 
 \examples{
 dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))

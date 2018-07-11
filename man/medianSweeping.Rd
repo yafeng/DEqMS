@@ -15,7 +15,8 @@ Usually the gene/protein id column. Default is 2}
 a data frame with protein relative abundance estimate in log2 scale
 }
 \description{
-This function is to calculate proteins'relative abundance by median sweeping method}
+This function is to calculate proteins'relative abundance by 
+median sweeping method}
 
 \examples{
 dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))

@@ -28,10 +28,13 @@ sca.postvar - Spectra Count Adjusted posterior variance
 loess.model - fitted loess model
 }
 \description{
-This function is to calculate peptide/spectra count adjusted t-statistics, p-values.
+This function is to calculate peptide/PSM count adjusted t-statistics, p-values.
 }
 \details{
-This function adjusts the T-statistics and p-values for quantitative MS proteomics experiment according to the number of peptides/PSMs used for quantification. The method is similar in nature to intensity-based Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
+This function adjusts the T-statistics and p-values for quantitative MS 
+proteomics experiment according to the number of peptides/PSMs used for 
+quantification. The method is similar in nature to intensity-based Bayes 
+method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
 dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
@@ -41,7 +44,8 @@ dat.pep$cond1_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[3:7])))
 dat.pep$cond2_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[8:12])))
 
 #require minimum two observations in each condition
-dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & dat.pep$cond2_na_count <3,1:12]
+dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & 
+dat.pep$cond2_na_count <3,1:12]
     
 dat.pep.log = dat.pep.filter
 dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
