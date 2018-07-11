@@ -13,8 +13,8 @@ which corresponding t-statistics and p-values are extracted in the output}
 }
 \value{
 a data frame object with the last three columns being:
-sca.t	 - Peptide or Spectra Count Adjusted posterior t-value
-sca.P.Value	- Adjusted posterior p-value
+sca.t - Peptide or Spectra Count Adjusted posterior t-value
+sca.P.Value - Adjusted posterior p-value
 sca.adj - sca.P.Value adjusted by BH method
 }
 \description{

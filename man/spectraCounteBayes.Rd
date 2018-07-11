@@ -20,8 +20,8 @@ calculated}
 }
 \value{
 a list object with the additional attributes being:
-sca.t	 - Spectra Count Adjusted posterior t-value
-sca.p	 - Spectra Count Adjusted posterior p-value
+sca.t - Spectra Count Adjusted posterior t-value
+sca.p - Spectra Count Adjusted posterior p-value
 sca.dfprior - Spectra Count Adjusted prior degrees of freedom
 sca.priorvar- Spectra Count Adjusted estimated prior variance
 sca.postvar - Spectra Count Adjusted posterior variance
