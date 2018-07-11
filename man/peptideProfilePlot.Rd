@@ -21,14 +21,12 @@ in different samples.
 return a ggplot2 object
 }
 \examples{
-dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
-dat.psm[dat.psm == 0] <- NA # convert 0 to NA
-dat.psm = na.omit(dat.psm) # remove rows with NAs
-
-dat.psm.log = dat.psm
-dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
+dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
+dat.pep[dat.pep==0] <- NA
+dat.pep.log = na.omit(dat.pep)
+dat.pep.log[,3:12] = log2(dat.pep.log[,3:12])
     
-peptideProfilePlot(dat.psm.log,col=2,gene="TGFBR2")
+peptideProfilePlot(dat.psm.log,col=2,gene="IPI00001159")
 
 }
 \author{

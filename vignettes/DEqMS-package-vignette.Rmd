@@ -79,8 +79,8 @@ cond = c("ctrl","miR191","miR372","miR519","ctrl",
 "miR372","miR519","ctrl","miR191","miR372")
 
 sampleTable <- data.frame(
-  row.names = colnames(dat.psm)[3:12],
-  cond = as.factor(cond))
+row.names = colnames(dat.psm)[3:12],
+cond = as.factor(cond))
 sampleTable
 ```
 
@@ -93,7 +93,7 @@ psm.count.table = as.data.frame(table(dat.psm$gene))
 rownames(psm.count.table)=psm.count.table$Var1
 
 plot(sort(log2(psm.count.table$Freq)),pch=".",yaxt="n",
-     xlab="Proteins ordered by PSM count",ylab="PSM count")
+    xlab="Proteins ordered by PSM count",ylab="PSM count")
 ylab = lab<-c(1,2,4,16,64,256)
 axis(2,at=log2(ylab),labels=ylab)
 
@@ -128,7 +128,7 @@ samples and miR372 treated samples, both have three replicates.
 ```{r,echo=TRUE}
 
 pval.372 = apply(dat.gene.nm, 1, function(x) 
-  t.test(as.numeric(x[c(1,5,8)]), as.numeric(x[c(3,6,10)]))$p.value)
+t.test(as.numeric(x[c(1,5,8)]), as.numeric(x[c(3,6,10)]))$p.value)
 
 logFC.372 = rowMeans(dat.gene.nm[,c(3,6,10)])-rowMeans(dat.gene.nm[,c(1,5,8)])
 ```
@@ -169,10 +169,10 @@ ord.t = fit1$coefficients[, 3]/fit1$sigma/fit1$stdev.unscaled[, 3]
 ord.p = 2*pt(-abs(ord.t), fit1$df.residual)
 ord.q = p.adjust(ord.p,method = "BH")
 anova.results = data.frame(gene=names(fit1$sigma),
-                           logFC=fit1$coefficients[,3],
-                           t=ord.t, 
-                           P.Value=ord.p, 
-                           adj.P.Val = ord.q)
+                            logFC=fit1$coefficients[,3],
+                            t=ord.t, 
+                            P.Value=ord.p, 
+                            adj.P.Val = ord.q)
 
 anova.results$PSMcount = psm.count.table[anova.results$gene,]$Freq
 anova.results = anova.results[with(anova.results,order(P.Value)),]
@@ -209,14 +209,14 @@ We observed that the variance of gene across samples gradually decreases
 as the number of spectra count increases.
 ```{r , echo=TRUE, fig.height=5, fig.width=10}
 dat.temp = data.frame(var = fit2$sigma^2,
-                      PSMcount = psm.count.table[names(fit2$sigma),]$Freq)
+                        PSMcount = psm.count.table[names(fit2$sigma),]$Freq)
 dat.temp.filter = dat.temp[dat.temp$PSMcount<21,]
 
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
 plot(log2(psm.count.table[rownames(dat.gene.nm),2]),
-     dat.gene.nm[,1]-dat.gene.nm[,5],pch=20,cex=0.5,
-     xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates",
-     main="variation between two control replicates")
+    dat.gene.nm[,1]-dat.gene.nm[,5],pch=20,cex=0.5,
+    xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates",
+    main="variation between two control replicates")
 
 boxplot(log2(var)~PSMcount,dat.temp.filter,xlab="PSMcount",
         ylab="log2(Variance)",main="variance dependence on PSM count")
@@ -265,13 +265,13 @@ limma.prior = fit3$s2.prior
 DEqMS.prior = fit3$sca.priorvar
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
 plot(log2(x),log(y),pch=20, cex=0.5, xlab = "log2(PSMcount)",
-     ylab="log(Variance)")
+    ylab="log(Variance)")
 
 abline(h = log(limma.prior),col="green",lwd=3 )
 k=order(x)
 lines(log2(x[k]),log(DEqMS.prior[k]),col="red",lwd=3 )
 legend("topright",legend=c("Limma prior variance","DEqMS prior variance"),
-       col=c("green","red"),lwd=3)
+        col=c("green","red"),lwd=3)
 ```
 
 
@@ -283,13 +283,13 @@ x = fit3$count
 y = fit3$s2.post
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
 plot(log2(x),log2(y),pch=20,cex=0.5 , xlab = "log2(PSMcount)",
-     ylab="log2(Variance)",
-     main="Posterior Variance in Limma")
+    ylab="log2(Variance)",
+    main="Posterior Variance in Limma")
 
 y = fit3$sca.postvar
 plot(log2(x),log2(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
-     ylab="log2(Variance)",
-     main="Posterior Variance in DEqMS")
+    ylab="log2(Variance)",
+    main="Posterior Variance in DEqMS")
 ```
 
 
@@ -297,17 +297,17 @@ plot(log2(x),log2(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
 plotting top 500 genes ranked by p-values.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
 plot(sort(-log10(limma.results$P.Value),decreasing = TRUE)[1:500], 
-     type="l",lty=2,lwd=2, ylab="-log10(p-value)",
-     xlab="Proteins ranked by p-values",
-     col="purple",ylim=c(0,9))
+    type="l",lty=2,lwd=2, ylab="-log10(p-value)",
+    xlab="Proteins ranked by p-values",
+    col="purple",ylim=c(0,9))
 lines(sort(-log10(DEqMS.results$sca.P.Value),decreasing = TRUE)[1:500], 
-      lty=1,lwd=2,col="red")
+        lty=1,lwd=2,col="red")
 lines(sort(-log10(anova.results$P.Value),decreasing = TRUE)[1:500], 
-      lty=2,lwd=2,col="blue")
+        lty=2,lwd=2,col="blue")
 lines(sort(-log10(ttest.results$P.Value),decreasing = TRUE)[1:500], 
-      lty=2,lwd=2,col="orange")
+        lty=2,lwd=2,col="orange")
 legend("topright",legend = c("limma","DEqMS","Anova","t.test"),
-       col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
+        col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
 ```
 
 
@@ -336,7 +336,7 @@ ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) +
   geom_vline(xintercept = 0, colour = "black") + # Add 0 lines
   scale_colour_gradient(low = "black", high = "black", guide = FALSE)+
   geom_text_repel(data=subset(DEqMS.results, abs(logFC) > 1 & log.adj.pval> 2),
-                  aes( logFC, log.adj.pval ,label=gene)) # add gene label
+                    aes( logFC, log.adj.pval ,label=gene)) # add gene label
 
 ```
 
@@ -347,7 +347,7 @@ pr <- prcomp(t(gene.matrix))
 plot( pr$x[,1:2], asp=1, col=brewer.pal(4,"Set1")[sampleTable$cond], pch=17)
 text( pr$x[,1], pr$x[,2]-1, label=as.character(sampleTable$cond))
 legend( "bottomright", legend = levels( sampleTable$cond ), 
-   col = brewer.pal(4,"Set1"), pch=17 )
+    col = brewer.pal(4,"Set1"), pch=17 )
 ```
 
 ### 5.4 Sample correlation heatmaps
@@ -358,9 +358,9 @@ cm <- cor( gene.matrix )
 # rearrange columns so that same sample types are together
 cm.order = cm[order(colnames(cm)),order(colnames(cm))]
 
-pheatmap( cm.order,
-   cluster_rows=FALSE, cluster_cols=FALSE,
-   color = colorRampPalette(c("blue", "white", "red"))(100))
+pheatmap(cm.order,
+    cluster_rows=FALSE, cluster_cols=FALSE,
+    color = colorRampPalette(c("blue", "white", "red"))(100))
 ```
 
 
@@ -368,8 +368,8 @@ or plot Eucldiean distance heatmap
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
 dm <- as.matrix( dist( t( gene.matrix ) ))
 dm.order = dm[order(colnames(cm)),order(colnames(cm))]
-pheatmap( dm.order,
-   cluster_rows=FALSE, cluster_cols=FALSE,
-   color = colorRampPalette(c("red", "white"))(100))
+pheatmap(dm.order,
+    cluster_rows=FALSE, cluster_cols=FALSE,
+    color = colorRampPalette(c("red", "white"))(100))
 
 ```
