@@ -183,7 +183,8 @@ head(anova.results)
 ### 3.7 Limma analysis
 Limma is essentially a combination of linear model analysis and empirical 
 bayeisan estimation of variance, the latter is applied to increase the 
-statistical power by borrowing informations across genes to shrink the variance. 
+statistical power by borrowing informations across genes to shrink the
+variance. 
 
 ```{r,echo=TRUE}
 fit2 <- eBayes(lmFit(gene.matrix,design))
@@ -230,9 +231,9 @@ in a similar way to the intensity-based hierarchical Bayes method
 (Maureen A. Sartor et al BMC Bioinformatics 2006).
 Outputs of `spectraCounteBayes`:  
 object is augmented form of "fit" object from `eBayes` in Limma, with the 
-additions being:  
-`sca.t`	 - Spectra Count Adjusted posterior t-value  
-`sca.p`	 - Spectra Count Adjusted posterior p-value  
+additions being:
+`sca.t` - Spectra Count Adjusted posterior t-value  
+`sca.p` - Spectra Count Adjusted posterior p-value  
 `sca.dfprior` - estimated prior degrees of freedom  
 `sca.priorvar`- estimated prior variance
 `sca.postvar` - estimated posterior variance

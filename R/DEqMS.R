@@ -8,7 +8,7 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     ################################################
     logVAR<-log(fit$sigma^2)
     df<-fit$df.residual
-    numgenes<-length(logVAR[df>0])	
+    numgenes<-length(logVAR[df>0])
     df[df==0]<-NA
     eg<-logVAR-digamma(df/2)+log(df/2)
     names(fit$count) = rownames(fit$coefficients)
