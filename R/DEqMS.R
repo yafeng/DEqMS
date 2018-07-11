@@ -13,7 +13,7 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     eg<-logVAR-digamma(df/2)+log(df/2)
     names(fit$count) = rownames(fit$coefficients)
     output<-fit
-  
+
     if (fit.method == "loess"){
         x=log2(fit$count)
         loess.model = loess(logVAR~x,span = 0.75)
@@ -48,8 +48,8 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     post.var<- (d0*s02 + df*fit$sigma^2)/(d0+df)
     post.df<-d0+df
     # sca.t and scc.p stands for spectra count adjusted t and p values.  
-    sca.t<-as.matrix(fit$coefficients[,coef_col]/
-                         (fit$stdev.unscaled[,coef_col]*sqrt(post.var)))
+    sca.t<-as.matrix(fit$coefficients[,coef_col]/(fit$stdev.unscaled[,coef_col]
+                                                  *sqrt(post.var)))
     sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
     
     output$sca.t<-sca.t

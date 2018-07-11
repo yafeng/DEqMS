@@ -2,7 +2,7 @@
 \alias{peptideProfilePlot}
 \title{plot log2 intensities of all peptides for one gene in different samples}
 \usage{
-    peptideProfilePlot(dat, col=2, gene)
+peptideProfilePlot(dat, col=2, gene)
 }
 \arguments{
 \item{dat}{a data frame with peptide/psm log2 intensities}
@@ -14,22 +14,22 @@
 }
 
 \description{
-    This function is to plot log2 intensities of all peptides for one gene in different samples.
+This function is to plot log2 intensities of all peptides for one gene in different samples.
 }
 \value{
-    return a ggplot2 object
+return a ggplot2 object
 }
 \examples{
-    dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
-    dat.psm[dat.psm == 0] <- NA # convert 0 to NA
-    dat.psm = na.omit(dat.psm) # remove rows with NAs
+dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
+dat.psm[dat.psm == 0] <- NA # convert 0 to NA
+dat.psm = na.omit(dat.psm) # remove rows with NAs
 
-    dat.psm.log = dat.psm
-    dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])  # log2 transformation
     
-    peptideProfilePlot(dat.psm.log,col=2,gene="TGFBR2")
+peptideProfilePlot(dat.psm.log,col=2,gene="TGFBR2")
 
 }
 \author{
-    Yafeng Zhu
+Yafeng Zhu
 }
