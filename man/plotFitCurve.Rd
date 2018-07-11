@@ -23,9 +23,7 @@
 \value{
     return a plot graphic
 }
-\details{
 
-}
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA

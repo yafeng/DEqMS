@@ -7,7 +7,8 @@
 \arguments{
 \item{fit}{an list object produced by spectraCounteBayes function}
 
-\item{coef_col}{is an integer indicating the column of fit$coefficients for which corresponding t-statistics and p-values are extracted in the output}
+\item{coef_col}{is an integer indicating the column of fit$coefficients for 
+which corresponding t-statistics and p-values are extracted in the output}
 
 }
 \value{
@@ -19,9 +20,7 @@
 \description{
     This function is to generate DEqMS outputs in a data frame.
 }
-\details{
 
-}
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA
@@ -30,7 +29,8 @@
     dat.pep$cond2_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[8:12])))
 
     #require minimum two observations in each condition
-    dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & dat.pep$cond2_na_count <3,1:12]
+    dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & 
+    dat.pep$cond2_na_count<3,1:12]
     
     dat.pep.log = dat.pep.filter
     dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])

@@ -13,9 +13,7 @@ equalMedianNormalization(dat)
 }
 \description{
     This function is to normaliza out the differences of protein medians in different samples}
-\details{
 
-}
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA

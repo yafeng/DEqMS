@@ -14,9 +14,7 @@
 }
 \description{
     This function is to calculate proteins'relative abundance by Turkey median polish}
-\details{
 
-}
 \examples{
     dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
     dat.pep[dat.pep==0] <- NA

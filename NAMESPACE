@@ -8,6 +8,6 @@ export("equalMedianNormalization")
 export("medianSweeping")
 export("farmsSummary")
 
-importFrom("graphics", "boxplot", "lines", "plot")
+importFrom("graphics", "boxplot", "lines", "plot","stats")
 importFrom("limma","topTable")
 importFrom("stats", "loess", "na.omit", "nls", "p.adjust", "predict", "pt","medpolish")
