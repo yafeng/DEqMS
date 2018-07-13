@@ -10,5 +10,7 @@ export("farmsSummary")
 
 importFrom("graphics", "boxplot", "lines", "plot")
 importFrom("limma","topTable")
+importFrom("plyr","ddply")
+importFrom("matrixStats","colMedians","rowMedians")
 importFrom("stats", "loess", "na.omit", "nls", 
 "p.adjust", "predict", "pt","medpolish")
