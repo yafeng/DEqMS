@@ -16,14 +16,14 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
 
     if (fit.method == "loess"){
         x=log2(fit$count)
-        loess.model = stats::loess(logVAR~x,span = 0.75)
-        y.pred = stats::predict(loess.model)
+        loess.model = loess(logVAR~x,span = 0.75)
+        y.pred = predict(loess.model)
         output$loess.model = loess.model
     }else if (fit.method == "nls"){
         x=fit$count
         y=fit$sigma^2
-        nls.model =  stats::nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
-        y.pred = log(stats::predict(nls.model))
+        nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
+        y.pred = log(predict(nls.model))
         output$nls.model = nls.model
     }
     
@@ -69,7 +69,7 @@ outputResult <-function(fit,coef_col=1){
     
     results.table$sca.t = fit$sca.t[results.table$gene,coef_col]
     results.table$sca.P.Value = fit$sca.p[results.table$gene,coef_col]
-    results.table$sca.adj.pval = stats::p.adjust(results.table$sca.P.Value,
+    results.table$sca.adj.pval = p.adjust(results.table$sca.P.Value,
     method = "BH")
     results.table = results.table[order(results.table$sca.P.Value), ]
 }
@@ -85,7 +85,7 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
         if (type=="scatterplot"){
             plot(x,log(y),ylab="log(Variance)",main= main)
             
-            y.pred <- log(stats::predict(model))
+            y.pred <- log(predict(model))
             k = order(x)
             lines((x[k]),y.pred[k],col='red',lwd=3)
             
@@ -95,7 +95,7 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
             boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
                     ylab = "log(Variance)", main=main)
             
-            y.pred <- log(stats::predict(model,data.frame(x=seq(1,20))))
+            y.pred <- log(predict(model,data.frame(x=seq(1,20))))
             lines(seq(1,20),y.pred,col='red',lwd=3)
         }else{stop("only scatterplot and boxplot are supported")}
         
@@ -104,7 +104,7 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
         if (type=="scatterplot"){
             plot(x,log(y),ylab="log(Variance)",main= main)
             
-            y.pred <- stats::predict(model)
+            y.pred <- predict(model)
             k = order(x)
             lines((x[k]),y.pred[k],col='red',lwd=3)
             
@@ -114,7 +114,7 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
             boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
                     ylab = "log(Variance)", main=main)
             
-            y.pred <- stats::predict(model,log2(seq(1,20)))
+            y.pred <- predict(model,log2(seq(1,20)))
             lines(seq(1,20),y.pred,col='red',lwd=3)
         }else{stop("only scatterplot and boxplot are supported")}
     }  
@@ -155,7 +155,7 @@ medianSummary <- function(dat,group_col=2,ref_col) {
 
 
 medianPolish <- function (m) {
-    dat = stats::medpolish(m,trace.iter=FALSE)$col
+    dat = medpolish(m,trace.iter=FALSE)$col
     return (dat)
 }
 

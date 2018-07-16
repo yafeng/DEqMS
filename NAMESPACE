@@ -12,5 +12,3 @@ importFrom("graphics", "boxplot", "lines", "plot")
 importFrom("stats", "loess", "na.omit", "nls", 
 "p.adjust", "predict", "pt","medpolish")
 importFrom("limma","topTable")
-importFrom("plyr","ddply")
-importFrom("matrixStats","colMedians","rowMedians")

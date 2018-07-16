@@ -1,6 +1,6 @@
 Package: DEqMS
-Version: 0.99.26
-Date: 2018/07/13
+Version: 0.99.27
+Date: 2018/07/16
 Title: Differential protein expression analysis for quantitative MS data
 Author: Yafeng Zhu
 Maintainer: Yafeng Zhu <yafeng.zhu@ki.se>
@@ -11,6 +11,6 @@ Description:  Data analysis, differential protein expression analysis for quanti
 License: LGPL
 biocViews: Proteomics, MassSpectrometry, Preprocessing, DifferentialExpression, MultipleComparison,Normalization,Bayesian
 VignetteBuilder: knitr
-Packaged: Fri Jul 13 18:17:00 2018; yafeng
+Packaged: Mon Jul 16 18:17:00 2018; yafeng
 BugReports: https://github.com/yafeng/DEqMS/issues
 
