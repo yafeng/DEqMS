@@ -26,7 +26,7 @@ dat.pep[dat.pep==0] <- NA
 dat.pep.log = na.omit(dat.pep)
 dat.pep.log[,3:12] = log2(dat.pep.log[,3:12])
     
-peptideProfilePlot(dat.psm.log,col=2,gene="IPI00001159")
+peptideProfilePlot(dat.pep.log,col=2,gene="IPI00001159")
 
 }
 \author{
