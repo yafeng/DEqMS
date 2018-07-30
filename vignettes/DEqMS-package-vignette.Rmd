@@ -64,7 +64,8 @@ Intenisty values were log transformed since systematic effects and variance
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
 ```{r,echo = TRUE}
-download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",destfile = "./PXD004163.zip",method = "wget")
+download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",destfile = "./PXD004163.zip",
+              method = "auto")
 unzip("./PXD004163.zip")
 dat.psm = readRDS("./PXD004163.rds")
 colnames(dat.psm)[2] = "gene"
