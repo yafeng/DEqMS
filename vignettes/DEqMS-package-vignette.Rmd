@@ -64,7 +64,9 @@ Intenisty values were log transformed since systematic effects and variance
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
 ```{r,echo = TRUE}
-dat.psm = readRDS(system.file("extdata","PXD004163.rds",package="DEqMS"))
+download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",destfile = "./PXD004163.zip",method = "wget")
+unzip("./PXD004163.zip")
+dat.psm = readRDS("./PXD004163.rds")
 colnames(dat.psm)[2] = "gene"
 dat.psm = na.omit(dat.psm)
 
@@ -327,15 +329,15 @@ library(ggrepel)
 
 DEqMS.results$log.adj.pval = -log10(DEqMS.results$sca.adj.pval)
 ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) + 
-  geom_point(siz=0.5 )+
-  theme_bw(base_size = 16) + # change theme
-  xlab(expression("log2 miR372/ctrl")) + # x-axis label
-  ylab(expression(" -log10 adj.pval")) + # y-axis label
-  geom_vline(xintercept = c(-1,1), colour = "red") + # Add fold change cutoffs
-  geom_hline(yintercept = 2, colour = "red") + # Add significance cutoffs
-  geom_vline(xintercept = 0, colour = "black") + # Add 0 lines
-  scale_colour_gradient(low = "black", high = "black", guide = FALSE)+
-  geom_text_repel(data=subset(DEqMS.results, abs(logFC) > 1 & log.adj.pval> 2),
+    geom_point(siz=0.5 )+
+    theme_bw(base_size = 16) + # change theme
+    xlab(expression("log2 miR372/ctrl")) + # x-axis label
+    ylab(expression(" -log10 adj.pval")) + # y-axis label
+    geom_vline(xintercept = c(-1,1), colour = "red") + # Add fold change cutoffs
+    geom_hline(yintercept = 2, colour = "red") + # Add significance cutoffs
+    geom_vline(xintercept = 0, colour = "black") + # Add 0 lines
+    scale_colour_gradient(low = "black", high = "black", guide = FALSE)+
+    geom_text_repel(data=subset(DEqMS.results, abs(logFC) > 1 & log.adj.pval> 2),
                     aes( logFC, log.adj.pval ,label=gene)) # add gene label
 
 ```

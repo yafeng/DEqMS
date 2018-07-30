@@ -127,7 +127,7 @@ plotFitCurve(fit2,main="TMT10 dataset PXD004163", xlab="PSM count",type = "boxpl
 
 ### 7. Output the results
 ```{r}
-sca.results = outpuResult(fit2,coef_col=3)
+sca.results = outputResult(fit2,coef_col=3)
 write.table(sca.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
 head(sca.results,n=5)
 ```
