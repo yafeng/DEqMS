@@ -38,10 +38,7 @@ peptides or PSMs for statistical testing of differential protein expression.
 # Load the package
 
 ```{r Loadpackage}
-source("/Users/yafengzhu/Documents/github/DEqMS/R/DEqMS.R")
-library(plyr)
-library(matrixStats)
-library(limma)
+library(DEqMS)
 ```
 
 # Differential protein expression analysis
