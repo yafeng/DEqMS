@@ -37,8 +37,11 @@ peptides or PSMs for statistical testing of differential protein expression.
 
 # Load the package
 
-```{r,message=FALSE}
-library(DEqMS)
+```{r Loadpackage}
+source("/Users/yafengzhu/Documents/github/DEqMS/R/DEqMS.R")
+library(plyr)
+library(matrixStats)
+library(limma)
 ```
 
 # Differential protein expression analysis
@@ -55,7 +58,7 @@ Read a tabular input in which PSMs are in rows and samples are in columns.
 Intenisty values were log transformed since systematic effects and variance 
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
-```{r,echo = TRUE}
+```{r readInput}
 download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",
               destfile = "./PXD004163.zip",method = "auto")
 unzip("./PXD004163.zip")
@@ -69,7 +72,7 @@ dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
 head(dat.psm.log)
 ```
 Generate sample annotation table.
-```{r,echo = TRUE}
+```{r,design}
 cond = c("ctrl","miR191","miR372","miR519","ctrl",
 "miR372","miR519","ctrl","miR191","miR372")
 
@@ -83,15 +86,12 @@ sampleTable
 Since each row is one PSM, to count how many PSMs per protein, we simply use 
 function `table` in R to count the number of occurance that each protein ID 
 appears.
-```{r , echo=TRUE, fig.height=5, fig.width=7}
+```{r PSMdistribution}
 psm.count.table = as.data.frame(table(dat.psm$gene))
 rownames(psm.count.table)=psm.count.table$Var1
 
-plot(sort(log2(psm.count.table$Freq)),pch=".",yaxt="n",
-    xlab="Proteins ordered by PSM count",ylab="PSM count")
-ylab = lab<-c(1,2,4,16,64,256)
-axis(2,at=log2(ylab),labels=ylab)
-
+plot(sort(log2(psm.count.table$Freq)),pch=".",
+    xlab="Proteins ordered by PSM count",ylab="log2(PSM count)")
 ```
 
 ## Summarization and Normalization
@@ -109,7 +109,7 @@ $$Y_{k,j} = median_{i\in protein\ k}\ y'_{i,j} $$
 Correction for differences in amounts of material loaded in the channels 
 is then done by subtracting the channel median from the relative abundance 
 (log2 ratio), normalizing all channels to have median zero.
-```{r,echo=TRUE, fig.height=4, fig.width=7}
+```{r boxplot}
 dat.gene.nm = medianSweeping(dat.psm.log,group_col = 2)
 
 boxplot(dat.gene.nm,xlab="TMT 10 channels",
@@ -120,7 +120,7 @@ boxplot(dat.gene.nm,xlab="TMT 10 channels",
 We first apply t.test to detect significant protein changes between ctrl 
 samples and miR372 treated samples, both have three replicates.
 
-```{r,echo=TRUE}
+```{r t-test}
 
 pval.372 = apply(dat.gene.nm, 1, function(x) 
 t.test(as.numeric(x[c(1,5,8)]), as.numeric(x[c(3,6,10)]))$p.value)
@@ -152,7 +152,7 @@ protein abundance (log2 ratios) and a design matrix containing sample
 annotation. Use `head(fit$coefficients)` to see effect size(fold change)  of 
 genes for different conditions.
 
-```{r,echo=TRUE}
+```{r Anova}
 library(limma)
 gene.matrix = as.matrix(dat.gene.nm)
 colnames(gene.matrix) = as.character(sampleTable$cond)
@@ -181,7 +181,7 @@ bayeisan estimation of variance, the latter is applied to increase the
 statistical power by borrowing informations across genes to shrink the
 variance. 
 
-```{r,echo=TRUE}
+```{r Limma}
 fit2 <- eBayes(lmFit(gene.matrix,design))
 head(fit2$coefficients)
 ```
@@ -202,7 +202,7 @@ head(limma.results)
 ## Variance dependence on spectra count
 We observed that the variance of gene across samples gradually decreases 
 as the number of spectra count increases.
-```{r , echo=TRUE, fig.height=5, fig.width=10}
+```{r Variance, echo=TRUE, fig.height=5, fig.width=10}
 dat.temp = data.frame(var = fit2$sigma^2,
                         PSMcount = psm.count.table[names(fit2$sigma),]$Freq)
 dat.temp.filter = dat.temp[dat.temp$PSMcount<21,]
@@ -210,11 +210,10 @@ dat.temp.filter = dat.temp[dat.temp$PSMcount<21,]
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
 plot(log2(psm.count.table[rownames(dat.gene.nm),2]),
     dat.gene.nm[,1]-dat.gene.nm[,5],pch=20,cex=0.5,
-    xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates",
-    main="variation between two control replicates")
+    xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates")
 
 boxplot(log2(var)~PSMcount,dat.temp.filter,xlab="PSMcount",
-        ylab="log2(Variance)",main="variance dependence on PSM count")
+        ylab="log2(Variance)")
 
 ```
 
@@ -234,7 +233,7 @@ additions being:
 `sca.postvar` - estimated posterior variance
 `loess.model` - fitted loess model
 
-```{r,echo=TRUE}
+```{r DEqMS}
 fit2$count = psm.count.table[rownames(fit2$coefficients),]$Freq
 
 fit3 = spectraCounteBayes(fit2)
@@ -243,7 +242,7 @@ head(DEqMS.results)
 ```
 
 Check if the fitted variance ~ PMS count model is correct.
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r PriorVarianceTrend}
 plotFitCurve(fit3,type = "boxplot",xlab="PSM count")
 ```
 
@@ -252,16 +251,15 @@ plotFitCurve(fit3,type = "boxplot",xlab="PSM count")
 ## Compare prior variance and posterior variance in Limma and DEqMS
 
 Visualize the prior variance fitted by Limma and DEqMS
-```{r, echo=TRUE, fig.height=5, fig.width=10}
+```{r PriorVar}
 x = fit3$count
 y = fit3$sigma^2
 
 limma.prior = fit3$s2.prior
 DEqMS.prior = fit3$sca.priorvar
-op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
-plot(log2(x),log(y),pch=20, cex=0.5, xlab = "log2(PSMcount)",
-    ylab="log(Variance)")
 
+plot(log2(x),log(y),pch=20, cex=0.5,xlab = "log2(PSMcount)",
+     ylab="log(Variance)")
 abline(h = log(limma.prior),col="green",lwd=3 )
 k=order(x)
 lines(log2(x[k]),log(DEqMS.prior[k]),col="red",lwd=3 )
@@ -273,24 +271,25 @@ legend("topright",legend=c("Limma prior variance","DEqMS prior variance"),
 Visualize the change of posterior variance after PSM count adjustment. 
 The plot here shows posterior variance of proteins "shrink" toward the 
 fitted value to different extent depending on PSM number. 
-```{r, echo=TRUE, fig.height=5, fig.width=10}
+```{r PostVar, echo=TRUE, fig.height=5, fig.width=10}
 x = fit3$count
 y = fit3$s2.post
+
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
-plot(log2(x),log2(y),pch=20,cex=0.5 , xlab = "log2(PSMcount)",
-    ylab="log2(Variance)",
+plot(log2(x),log(y),pch=20, xlab = "log2(PSMcount)",
+    ylab="log(Variance)",
     main="Posterior Variance in Limma")
 
 y = fit3$sca.postvar
-plot(log2(x),log2(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
-    ylab="log2(Variance)",
+plot(log2(x),log(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
+    ylab="log(Variance)",
     main="Posterior Variance in DEqMS")
 ```
 
 
 ## Comparing p-values by different analysis.
 plotting top 500 genes ranked by p-values.
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r pvalue}
 plot(sort(-log10(limma.results$P.Value),decreasing = TRUE)[1:500], 
     type="l",lty=2,lwd=2, ylab="-log10(p-value)",
     xlab="Proteins ranked by p-values",
@@ -311,13 +310,13 @@ legend("topright",legend = c("Limma","DEqMS","Anova","t.test"),
 ## PSM/Peptide profile plot
 `peptideProfilePlot` function will plot log2 intensity of each PSM/peptide of 
 the protein in the input table.
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r PSMintensity}
 dat.psm.log.ordered = dat.psm.log[,c("Peptide","gene",sort(colnames(dat.psm.log)[3:12]))]
 peptideProfilePlot(dat=dat.psm.log.ordered,col=2,gene="TGFBR2")
 ```
 
 ## Volcano plot
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r volcanoplot1}
 library(ggplot2)
 library(ggrepel)
 
@@ -341,14 +340,14 @@ you can also use `volcanoplot` function from Limma. However, it uses `p.value`
 from Limma. If you want to plot `sca.pvalue` from `DEqMS`, you need to modify
 the fit object.
 
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r volcanoplot2}
 fit3$p.value = fit3$sca.p
 volcanoplot(fit3,coef=3, style = "p-value", highlight = 20, 
             names=rownames(fit3$coefficients))
 ```
 
 ## PCA plot
-```{r, echo=TRUE, fig.height=7, fig.width=7}
+```{r PCAplot}
 library( RColorBrewer )
 pr <- prcomp(t(gene.matrix)) 
 plot( pr$x[,1:2], asp=1, col=brewer.pal(4,"Set1")[sampleTable$cond], pch=17)
@@ -359,7 +358,7 @@ legend( "bottomright", legend = levels( sampleTable$cond ),
 
 ## Sample correlation heatmaps
 plot sample correlation heatmap
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r heatmap1}
 library( pheatmap )
 cm <- cor( gene.matrix )
 # rearrange columns so that same sample types are together
@@ -372,7 +371,7 @@ pheatmap(cm.order,
 
 
 or plot Eucldiean distance heatmap
-```{r, echo=TRUE, fig.height=5, fig.width=7}
+```{r heatmap2}
 dm <- as.matrix( dist( t( gene.matrix ) ))
 dm.order = dm[order(colnames(cm)),order(colnames(cm))]
 pheatmap(dm.order,
