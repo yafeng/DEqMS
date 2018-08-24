@@ -32,7 +32,10 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     myfct<- (eg-egpred)^2 - trigamma(df/2)
     
     mean.myfct<-mean(myfct,na.rm=TRUE)
-    priordf<-vector(); testd0<-vector()
+    
+    priordf<-vector("numeric", length=numgenes*10)
+    testd0<-vector("numeric", length=numgenes*10)
+    
     for (i in seq(1,numgenes*10)) {
         testd0[i]<-i/10
         priordf[i]= abs(mean.myfct-trigamma(testd0[i]/2))
@@ -40,10 +43,9 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
             if (priordf[i-2]<priordf[i-1]) { break }
         }
     }
-    d0<-testd0[match(min(priordf),priordf)]
-    #print("Prior degrees freedom found")
+    d0<-testd0[match(min(priordf),priordf)] # prior degree found
     
-    s02<-exp(egpred + digamma(d0/2) - log(d0/2))
+    s02<-exp(egpred + digamma(d0/2) - log(d0/2)) # calculate prior variance
     
     post.var<- (d0*s02 + df*fit$sigma^2)/(d0+df)
     post.df<-d0+df
@@ -75,7 +77,7 @@ outputResult <-function(fit,coef_col=1){
 }
 
 plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
-    xlab="peptide count",main="") {
+    xlab="",main="") {
     x = fit$count
     y = fit$sigma^2
     
@@ -83,11 +85,12 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
         model = fit$nls.model
         
         if (type=="scatterplot"){
-            plot(x,log(y),ylab="log(Variance)",main= main)
+            plot(log2(x),log(y),ylab="log(Variance)",xlab="log2(count)",
+                 main= main)
             
             y.pred <- log(predict(model))
             k = order(x)
-            lines((x[k]),y.pred[k],col='red',lwd=3)
+            lines(log2(x[k]),y.pred[k],col='red',lwd=3)
             
         }else if (type=="boxplot"){
             df.temp = data.frame(pep_count =x, variance = y )
@@ -102,11 +105,11 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
     }else if (fit.method=="loess"){
         model = fit$loess.model
         if (type=="scatterplot"){
-            plot(x,log(y),ylab="log(Variance)",main= main)
+            plot(log2(x),log(y),ylab="log(Variance)",main= main)
             
             y.pred <- predict(model)
             k = order(x)
-            lines((x[k]),y.pred[k],col='red',lwd=3)
+            lines(log2(x[k]),y.pred[k],col='red',lwd=3)
             
         }else if (type=="boxplot"){
             df.temp = data.frame(pep_count =x, variance = y )
@@ -129,21 +132,26 @@ peptideProfilePlot <- function(dat,col=2,gene){
     
     m = reshape2::melt(dat.sub) 
     m$PSM_id =  rep(seq(1,nrow(dat.sub)),sample_size)
-    ggplot2::ggplot(m, ggplot2::aes(x=variable,y=value))+
-        ggplot2::geom_point()+
-        ggplot2::geom_line(ggplot2::aes(group=PSM_id,col=Peptide))+
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
-        hjust = 1))+ggplot2::ggtitle(dat[1,2])+
-        ggplot2::xlab("samples")+
-        ggplot2::ylab("log2 intensity")+
-        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+    ggplot(m, aes(x=variable,y=value))+
+        geom_point()+
+        geom_line(aes(group=PSM_id,col=Peptide))+
+        theme(axis.text.x = element_text(angle = 90,hjust = 1))+
+        ggtitle(dat.sub[1,2])+
+        xlab("samples")+
+        ylab("log2 intensity")+
+        theme(plot.title = element_text(hjust = 0.5))
 }
 
 
 medianSummary <- function(dat,group_col=2,ref_col) {
     dat.ratio = dat
-    dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
-        rowMeans(dat.ratio[,ref_col],na.rm = TRUE)
+    if (length(ref_col)>1){
+        dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
+            rowMeans(dat.ratio[,ref_col],na.rm = TRUE)  
+    }else {
+        dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - dat.ratio[,ref_col]
+    }
+    
     dat.summary = plyr::ddply(dat.ratio,colnames(dat)[group_col],
     function(x)matrixStats::colMedians(as.matrix(x[,3:ncol(dat)]),na.rm = TRUE))
     

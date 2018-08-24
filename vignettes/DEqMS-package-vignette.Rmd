@@ -1,75 +1,67 @@
 ---
-title: "DEqMS Package"
-author: "YAFENG ZHU @ Karolinska Institutet"
+title: "DEqMS R Markdown vignettes"
+author: 
+- name: Yafeng Zhu
+  affiliation: Karolinska Institute, Stockholm, Sweden
+- name: Lukas Orre
+  affiliation: Karolinska Institute, Stockholm, Sweden
+- name: Georgios Mermelekas
+  affiliation: Karolinska Institute, Stockholm, Sweden
+- name: Henrik Johansson
+  affiliation: Karolinska Institute, Stockholm, Sweden
+- name: Alina Malyutina
+  affiliation: University of Helsinki, Helsinki, Finland
+- name: Simon Anders
+- affiliation: Heidelberg University (ZMBH), Heidelberg, Germany
+- name: Janne Lehtiö
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  BiocStyle::html_document:
+    toc_fload: true
+  BiocStyle::pdf_document: default   
+package: DEqMS
+abstract:
+  Instructions to perform differential protein expression analysis using DEqMS
 vignette: >
-    %\VignetteIndexEntry{DEqMS package}
+    %\VignetteIndexEntry{DEqMS R Markdown vignettes}
     %\VignetteEngine{knitr::rmarkdown}
     %\VignetteEncoding{UTF-8}
 ---
 
-## Content
+# Overview of DEqMS
 
-The Vignette is used to guide users to perform differential protein expression 
-analysis:
+`DEqMS` builds on top of `Limma`, a widely-used R package for microarray data 
+analysis (Smyth G. et al 2004), and improves it with mass spectrometry specific 
+data properties, accounting for variance dependence on the number of quantified 
+peptides or PSMs for statistical testing of differential protein expression. 
 
-1. Overview of DEqMS
-2. Installation
-3. Differential protein expression analysis
-    + 3.1 Example Dataset: A431 cells treated with three different miRNA mimics
-    + 3.2 Loading the data
-    + 3.3 Generate a summary of the data
-    + 3.4 Summarization and Normalization
-    + 3.5 Ordinary T test
-    + 3.6 Anova analysis
-    + 3.7 Limma analysis
-    + 3.8 Variance dependence on spectra count and non-linear regression
-    + 3.9 DEqMS analysis
-
-4. Comparing T test, Anova, Limma and DEqMS
-5. Visualization of the results
-    + 5.1 PSM/Peptide profile plot
-    + 5.2 Volcano plot
-    + 5.3 PCA plot
-    + 5.4 Sample correlation heatmap
-
-## 1 Overview of DEqMS
-
-`DEqMS` works on top of Limma, a widely-used R package for microarray data 
-analysis (Smyth G. et al 2004), and improve it with mass spectrometry specific 
-data properties, variance dependence on peptide spectra count for statistical 
-testing of differential protein expression. 
-
-## 2 Installation
+# Load the package
 
 ```{r,message=FALSE}
 library(DEqMS)
-library(matrixStats)
-library(plyr)
 ```
 
-## 3 Differential protein expression analysis
-### 3.1 Example Dataset: A431 cells treated with three different miRNA mimics
-we analyzed a protemoics dataset (TMT10plex labelling) in which A431 cells 
+# Differential protein expression analysis
+## Example Dataset 1
+We analyzed a protemoics dataset (TMT10plex labelled) in which A431 cells 
 (human epidermoid carcinoma cell line) were treated with three different miRNA 
 mimics (Yan Z. et al. Oncogene 2016). The raw MS data was searched with MS-GF+ 
 (Kim et al Nat Communications 2016) and post processed with Percolator (Kall L. 
 et al Nat Method 2007). A tabular text output of PSM intensity table filtered 
 at 1% peptide level FDR is used as input for downstream analysis.
 
-### 3.2 Loading the data and preprocess
+## Loading the data and preprocess
 Read a tabular input in which PSMs are in rows and samples are in columns.
 Intenisty values were log transformed since systematic effects and variance 
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
 ```{r,echo = TRUE}
-download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",destfile = "./PXD004163.zip",
-              method = "auto")
+download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",
+              destfile = "./PXD004163.zip",method = "auto")
 unzip("./PXD004163.zip")
-dat.psm = readRDS("./PXD004163.rds")
+dat.psm = readRDS("PXD004163.rds")
 colnames(dat.psm)[2] = "gene"
-dat.psm = na.omit(dat.psm)
+dat.psm = na.omit(dat.psm) # remove PSMs with missing values
 
 dat.psm.log = dat.psm
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
@@ -87,7 +79,7 @@ cond = as.factor(cond))
 sampleTable
 ```
 
-### 3.3 Generate a summary of the data
+## Generate a summary of the data
 Since each row is one PSM, to count how many PSMs per protein, we simply use 
 function `table` in R to count the number of occurance that each protein ID 
 appears.
@@ -102,7 +94,7 @@ axis(2,at=log2(ylab),labels=ylab)
 
 ```
 
-### 3.4 Summarization and Normalization
+## Summarization and Normalization
 Here, median sweeping is used to summarize PSMs intensities to protein log2 
 ratios. In this procedure, we substract the spectrum log2 intensity from the 
 median log2 intensities of all samples. The relative abundance estimate for 
@@ -124,7 +116,7 @@ boxplot(dat.gene.nm,xlab="TMT 10 channels",
         ylab="log2 relative protein abundance")
 ```
 
-### 3.5 Ordinary T test
+## Ordinary T test
 We first apply t.test to detect significant protein changes between ctrl 
 samples and miR372 treated samples, both have three replicates.
 
@@ -148,7 +140,7 @@ ttest.results = ttest.results[with(ttest.results, order(P.Value)), ]
 head(ttest.results)
 ```
 
-### 3.6 Anova analysis
+## Anova analysis
 Anova analysis is equivalent to linear model analysis. The difference to 
 Limma analysis is that estimated variance is not moderated using empirical 
 bayesian approach as it is done in Limma. The purpose here is to compare 
@@ -183,7 +175,7 @@ anova.results = anova.results[with(anova.results,order(P.Value)),]
 head(anova.results)
 ```
 
-### 3.7 Limma analysis
+## Limma analysis
 Limma is essentially a combination of linear model analysis and empirical 
 bayeisan estimation of variance, the latter is applied to increase the 
 statistical power by borrowing informations across genes to shrink the
@@ -196,7 +188,7 @@ head(fit2$coefficients)
 
 Extract limma results using `topTable` function,  `coef = 3` allows you to 
 extract the contrast of specific condition (miR372), option `n= Inf` output 
-all rows instead of the top 10.
+all rows.
 Add PSM count values in the table.
 ```{r,echo=TRUE}
 limma.results = topTable(fit2,coef = 3,n= Inf)
@@ -207,7 +199,7 @@ head(limma.results)
 ```
 
 
-### 3.8 Variance dependence on spectra count
+## Variance dependence on spectra count
 We observed that the variance of gene across samples gradually decreases 
 as the number of spectra count increases.
 ```{r , echo=TRUE, fig.height=5, fig.width=10}
@@ -226,10 +218,10 @@ boxplot(log2(var)~PSMcount,dat.temp.filter,xlab="PSMcount",
 
 ```
 
-### 3.9 DEqMS analysis
+## DEqMS analysis
 Limma assumes equal prior variance for all genes, the function 
-`spectraCounteBayes` in DEqMS package  is able to correct the biase of prior 
-variance estimate for genes identified with different number of PSMs. It works 
+`spectraCounteBayes` in DEqMS package is able to correct the biase of prior 
+variance estimate for proteins quantified by different number of PSMs. It works 
 in a similar way to the intensity-based hierarchical Bayes method
 (Maureen A. Sartor et al BMC Bioinformatics 2006).
 Outputs of `spectraCounteBayes`:  
@@ -243,9 +235,9 @@ additions being:
 `loess.model` - fitted loess model
 
 ```{r,echo=TRUE}
-fit2$count = psm.count.table[names(fit2$sigma),]$Freq
+fit2$count = psm.count.table[rownames(fit2$coefficients),]$Freq
 
-fit3 = spectraCounteBayes(fit2,coef_col =1:4, fit.method = "loess")
+fit3 = spectraCounteBayes(fit2)
 DEqMS.results = outputResult(fit3,coef_col = 3)
 head(DEqMS.results)
 ```
@@ -256,8 +248,8 @@ plotFitCurve(fit3,type = "boxplot",xlab="PSM count")
 ```
 
 
-## 4 Comparing T test, Anova, Limma and DEqMS
-### 4.1 Compare prior variance and posterior variance in Limma and DEqMS
+# Comparing Limma and DEqMS
+## Compare prior variance and posterior variance in Limma and DEqMS
 
 Visualize the prior variance fitted by Limma and DEqMS
 ```{r, echo=TRUE, fig.height=5, fig.width=10}
@@ -296,7 +288,7 @@ plot(log2(x),log2(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
 ```
 
 
-### 4.2 Comparing p-values by different analysis.
+## Comparing p-values by different analysis.
 plotting top 500 genes ranked by p-values.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
 plot(sort(-log10(limma.results$P.Value),decreasing = TRUE)[1:500], 
@@ -309,26 +301,28 @@ lines(sort(-log10(anova.results$P.Value),decreasing = TRUE)[1:500],
         lty=2,lwd=2,col="blue")
 lines(sort(-log10(ttest.results$P.Value),decreasing = TRUE)[1:500], 
         lty=2,lwd=2,col="orange")
-legend("topright",legend = c("limma","DEqMS","Anova","t.test"),
+legend("topright",legend = c("Limma","DEqMS","Anova","t.test"),
         col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
 ```
 
 
-## 5 Visualization of the results
+# Visualization of the results
 
-### 5.1 PSM/Peptide profile plot
-`make.profile.plot` function will plot log2 intensity of each PSM/peptide of 
-the protein  in the input table.
+## PSM/Peptide profile plot
+`peptideProfilePlot` function will plot log2 intensity of each PSM/peptide of 
+the protein in the input table.
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
-peptideProfilePlot(dat=dat.psm.log,col=2,gene="TGFBR2")
+dat.psm.log.ordered = dat.psm.log[,c("Peptide","gene",sort(colnames(dat.psm.log)[3:12]))]
+peptideProfilePlot(dat=dat.psm.log.ordered,col=2,gene="TGFBR2")
 ```
 
-### 5.3 Volcano plot
+## Volcano plot
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
 library(ggplot2)
 library(ggrepel)
 
-DEqMS.results$log.adj.pval = -log10(DEqMS.results$sca.adj.pval)
+# to plot adjusted p-values by BH method on y-axis
+DEqMS.results$log.adj.pval = -log10(DEqMS.results$sca.adj.pval) 
 ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) + 
     geom_point(siz=0.5 )+
     theme_bw(base_size = 16) + # change theme
@@ -343,7 +337,17 @@ ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) +
 
 ```
 
-### 5.3 PCA plot
+you can also use `volcanoplot` function from Limma. However, it uses `p.value`
+from Limma. If you want to plot `sca.pvalue` from `DEqMS`, you need to modify
+the fit object.
+
+```{r, echo=TRUE, fig.height=5, fig.width=7}
+fit3$p.value = fit3$sca.p
+volcanoplot(fit3,coef=3, style = "p-value", highlight = 20, 
+            names=rownames(fit3$coefficients))
+```
+
+## PCA plot
 ```{r, echo=TRUE, fig.height=7, fig.width=7}
 library( RColorBrewer )
 pr <- prcomp(t(gene.matrix)) 
@@ -353,7 +357,7 @@ legend( "bottomright", legend = levels( sampleTable$cond ),
     col = brewer.pal(4,"Set1"), pch=17 )
 ```
 
-### 5.4 Sample correlation heatmaps
+## Sample correlation heatmaps
 plot sample correlation heatmap
 ```{r, echo=TRUE, fig.height=5, fig.width=7}
 library( pheatmap )

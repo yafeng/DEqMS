@@ -1,0 +1,8 @@
+\name{NEWS}
+\title{News for Package DEqMS}
+
+\section{Version 0.99.3 (2018-08-24)}{
+ \itemize{
+  \item Package prepared for Bioconductor submission
+ }
+}

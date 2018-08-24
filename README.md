@@ -2,10 +2,11 @@
 DEqMS is a tool for quantitative proteomic analysis, developed by Yafeng Zhu @ Karolinska Institutet. Manuscript in preparation.
 
 ## Installation
-git clone https://github.com/yafeng/DEqMS
-
-or click green button (clone or download) choose Download ZIP, and unzip it.
-
+```{r}
+#try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
+biocLite("DEqMS")
+```
 ## Introduction
 DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectraCounteBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 Outputs of `spectraCounteBayes`:
@@ -37,7 +38,10 @@ The first two columns in input table should be peptide sequence and protein/gene
 Here we analyzed a published protemoics dataset (TMT10plex labelling) in which A431 cells (human epidermoid carcinoma cell line) were treated with three different miRNA mimics (Zhou Y et al. Oncogene 2016). [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/27477696)
 
 ```{r}
-dat.psm = readRDS("./data/PXD004163.rds")
+download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",
+destfile = "./PXD004163.zip",method = "auto")
+unzip("./PXD004163.zip")
+dat.psm = readRDS("PXD004163.rds")
 dat.psm[dat.psm == 0] <- NA # convert 0 to NA
 dat.psm = na.omit(dat.psm) # remove rows with NAs
 
@@ -115,21 +119,21 @@ fit1$count <- psm.count.table[rownames(fit1$coefficients),2]  # add an attribute
 min(fit1$count)
 head(fit1$count)
 
-fit2 = spectraCounteBayes(fit1,coef_col=3) # two arguements, a fit object from eBayes() output, and the column number of coefficients
+fit2 = spectraCounteBayes(fit1)
 ```
 ### 6. plot the fitted prior variance
 Check fitted relation between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, y is log pooled variances calculated for each gene.
 ```{r}
-plotFitCurve(fit2,main="TMT10 dataset PXD004163", xlab="PSM count",type = "boxplot")
+plotFitCurve(fit2,type = "boxplot", main="TMT10 dataset PXD004163", xlab="PSM count)
 ```
 
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png)
 
 ### 7. Output the results
 ```{r}
-sca.results = outputResult(fit2,coef_col=3)
-write.table(sca.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
-head(sca.results,n=5)
+DEqMS.results = outputResult(fit2,coef_col=3)
+write.table(DEqMS.results, "DEqMS.analysis.out.txt", quote=F,sep="\t",row.names = F)
+head(DEqMS.results,n=5)
 ```
 | logFC        | AveExpr      | t            | P.Value  | adj.P.Val   | B           | gene    | PSMcount | sca.t        | sca.P.Value | sca.adj.pval |
 |--------------|--------------|--------------|----------|-------------|-------------|---------|----------|--------------|-------------|--------------|
@@ -139,8 +143,8 @@ head(sca.results,n=5)
 | -0.78072293  | 0.007763848  | -13.13285085 | 5.22E-07 | 0.00096131  | 6.742716671 | PDCD4   | 40       | -14.34371369 | 9.75E-09    | 2.24E-05     |
 | -0.7976368   | -0.000657979 | -14.41697245 | 2.41E-07 | 0.000553767 | 7.388343266 | PHLPP2  | 8        | -12.7927884  | 3.42E-08    | 6.08E-05     |
 
-Column `logFC`, `AveExpr`, `t`, `P.Value`, `adj.P.Val`, `B` are values generated from Limma.
-Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced from `spectra.count.eBayes`, which takes into account the number of quantified spectra/peptides.
+Column `logFC`, `AveExpr`, `t`, `P.Value`, `adj.P.Val`, `B` are original values generated from Limma.
+Last three columns `sca.t`, `sca.P.Value` and `sca.adj.pval` are values produced from `spectraCounteBayes`, which takes into account the number of quantified spectra/peptides.
 
 ## analyze label free dataset
 ### 1. load R packages
@@ -150,8 +154,7 @@ library(DEqMS)
 ### 2. Read input data and experimental design.
 Here we analyze a published label-free dataset in which they did quantitative proteomic analysis to detect proteome changes in FOXP3-overexpressed gastric cancer (GC) cells. (Pan D. et al 2017 Sci Rep) [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/29089565). The data was searched by MaxQuant Software and the output file "peptides.txt" was used here. (The column "Leading razor protein" in peptides.txt table was extracted as Protein column here).
 ```{r}
-pepTable = readRDS("./data/PXD007725.rds")
-exp_design = read.table("./data/PXD007725_design.txt",header = T,sep = "\t",stringsAsFactors = F)
+pepTable = readRDS(system.file("int/extdata/","PXD007725.rds",package = "DEqMS"))
 ```
 
 ### 3. Filter peptides based on missing values (DEqMS requires minimum two observations in each condition)
@@ -212,5 +215,3 @@ plotFitCurve(fit4,type = "boxplot",main = "Label-free dataset PXD0007725",xlab="
 AF.results = outputResult(fit4,coef_col = 1)
 write.table(AF.results,"AF.DEqMS.results.txt",sep = "\t",row.names = F,quote=F)
 ```
-## Package vignette
-more functioanlities are in HTML vignette.  [Go to HTML vignette](https://yafeng.github.io/DEqMS/index.html)

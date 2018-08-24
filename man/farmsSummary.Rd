@@ -6,7 +6,7 @@ factor analysis}
 farmsSummary(dat,group_col=2)
 }
 \arguments{
-\item{dat}{an data frame with original peptide/psm intensities}
+\item{dat}{an data frame with raw peptide or psm intensities}
 
 \item{group_col}{the column by which peptides/psm intensity are grouped.
 Usually it is the gene/protein id column. Default is 2}
