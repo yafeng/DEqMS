@@ -273,13 +273,13 @@ x = fit3$count
 y = fit3$s2.post
 
 op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
-plot(log2(x),log(y),pch=20, xlab = "log2(PSMcount)",
+plot(log2(x),log(y),pch=20, cex=0.5, xlab = "log2(PSMcount)", 
     ylab="log(Variance)",
     main="Posterior Variance in Limma")
 
 y = fit3$sca.postvar
 plot(log2(x),log(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
-    ylab="log(Variance)",
+    ylab="log(Variance)", 
     main="Posterior Variance in DEqMS")
 ```
 
@@ -290,7 +290,7 @@ plotting top 500 genes ranked by p-values.
 plot(sort(-log10(limma.results$P.Value),decreasing = TRUE)[1:500], 
     type="l",lty=2,lwd=2, ylab="-log10(p-value)",
     xlab="Proteins ranked by p-values",
-    col="purple",ylim=c(0,9))
+    col="purple")
 lines(sort(-log10(DEqMS.results$sca.P.Value),decreasing = TRUE)[1:500], 
         lty=1,lwd=2,col="red")
 lines(sort(-log10(anova.results$P.Value),decreasing = TRUE)[1:500], 
@@ -308,19 +308,19 @@ legend("topright",legend = c("Limma","DEqMS","Anova","t.test"),
 `peptideProfilePlot` function will plot log2 intensity of each PSM/peptide of 
 the protein in the input table.
 ```{r PSMintensity}
+library(ggplot2)
 dat.psm.log.ordered = dat.psm.log[,c("Peptide","gene",sort(colnames(dat.psm.log)[3:12]))]
 peptideProfilePlot(dat=dat.psm.log.ordered,col=2,gene="TGFBR2")
 ```
 
 ## Volcano plot
 ```{r volcanoplot1}
-library(ggplot2)
 library(ggrepel)
 
 # to plot adjusted p-values by BH method on y-axis
 DEqMS.results$log.adj.pval = -log10(DEqMS.results$sca.adj.pval) 
 ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) + 
-    geom_point(siz=0.5 )+
+    geom_point(size=0.5 )+
     theme_bw(base_size = 16) + # change theme
     xlab(expression("log2 miR372/ctrl")) + # x-axis label
     ylab(expression(" -log10 adj.pval")) + # y-axis label
@@ -339,7 +339,7 @@ the fit object.
 
 ```{r volcanoplot2}
 fit3$p.value = fit3$sca.p
-volcanoplot(fit3,coef=3, style = "p-value", highlight = 20, 
+volcanoplot(fit3,coef=3, style = "p-value", highlight = 20,
             names=rownames(fit3$coefficients))
 ```
 

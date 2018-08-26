@@ -33,8 +33,8 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     
     mean.myfct<-mean(myfct,na.rm=TRUE)
     
-    priordf<-vector("numeric", length=numgenes*10)
-    testd0<-vector("numeric", length=numgenes*10)
+    priordf<-vector()
+    testd0<-vector()
     
     for (i in seq(1,numgenes*10)) {
         testd0[i]<-i/10
