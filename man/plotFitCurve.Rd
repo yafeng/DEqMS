@@ -3,7 +3,7 @@
 \title{plot the fitted prior variance against the number of quantified peptides
 or PSMs}
 \usage{
-plotFitCurve(fit,fit.method="loess",type="boxplot",xlab="peptide count",main="")
+plotFitCurve(fit,fit.method="loess",type="boxplot",xlab="",main="")
 }
 \arguments{
 \item{fit}{an list object produced by spectraCounteBayes function}

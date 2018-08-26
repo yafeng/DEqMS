@@ -309,7 +309,8 @@ legend("topright",legend = c("Limma","DEqMS","Anova","t.test"),
 the protein in the input table.
 ```{r PSMintensity}
 library(ggplot2)
-dat.psm.log.ordered = dat.psm.log[,c("Peptide","gene",sort(colnames(dat.psm.log)[3:12]))]
+dat.psm.log.ordered = dat.psm.log[,c("Peptide","gene",
+                                    sort(colnames(dat.psm.log)[3:12]))]
 peptideProfilePlot(dat=dat.psm.log.ordered,col=2,gene="TGFBR2")
 ```
 
@@ -328,7 +329,7 @@ ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) +
     geom_hline(yintercept = 2, colour = "red") + # Add significance cutoffs
     geom_vline(xintercept = 0, colour = "black") + # Add 0 lines
     scale_colour_gradient(low = "black", high = "black", guide = FALSE)+
-    geom_text_repel(data=subset(DEqMS.results, abs(logFC) > 1 & log.adj.pval> 2),
+    geom_text_repel(data=subset(DEqMS.results, abs(logFC)>1&log.adj.pval> 2),
                     aes( logFC, log.adj.pval ,label=gene)) # add gene label
 
 ```

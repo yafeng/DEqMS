@@ -86,7 +86,7 @@ plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
         
         if (type=="scatterplot"){
             plot(log2(x),log(y),ylab="log(Variance)",xlab="log2(count)",
-                 main= main)
+                main= main)
             
             y.pred <- log(predict(model))
             k = order(x)
