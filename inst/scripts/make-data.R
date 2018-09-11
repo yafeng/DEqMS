@@ -7,11 +7,11 @@ url2 <- "ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2016/06/PXD004163/Yan_miR_
 download.file(url2, destfile = "./miR_Proteintable.txt",method = "auto")
 
 
-df.psm = read.table("miR_PSMtable.txt",stringsAsFactors = F,header = T,
+df.psm = read.table("miR_PSMtable.txt",stringsAsFactors = FALSE,header = TRUE,
                     quote = "", comment.char = "",sep = "\t")
 
-df.prot = read.table("miR_Proteintable.txt",stringsAsFactors = F,header = T,
-                     quote = "", comment.char = "",sep = "\t")
+df.prot = read.table("miR_Proteintable.txt",stringsAsFactors = FALSE,
+                     header = TRUE, quote = "", comment.char = "",sep = "\t")
 
 colnames(df.psm)
 

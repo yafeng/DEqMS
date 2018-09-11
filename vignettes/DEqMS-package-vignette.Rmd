@@ -55,17 +55,17 @@ Read a tabular input in which PSMs are in rows and samples are in columns.
 Intenisty values were log transformed since systematic effects and variance 
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
-```{r readInput}
-download.file("http://lehtiolab.se/Supplementary_Files/PXD004163.zip",
-              destfile = "./PXD004163.zip",method = "auto")
-unzip("./PXD004163.zip")
-dat.psm = readRDS("PXD004163.rds")
-colnames(dat.psm)[2] = "gene"
-dat.psm = na.omit(dat.psm) # remove PSMs with missing values
+```{r retrieveExampleData}
+### retrieve example dataset
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
+```
 
+```{r log2transform}
 dat.psm.log = dat.psm
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
-
 head(dat.psm.log)
 ```
 Generate sample annotation table.
