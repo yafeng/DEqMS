@@ -22,39 +22,38 @@ This function is to generate DEqMS outputs in a data frame.
 }
 
 \examples{
-dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
-dat.pep[dat.pep==0] <- NA
-    
-dat.pep$cond1_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[3:7])))
-dat.pep$cond2_na_count  = apply(dat.pep,1, function(x) sum(is.na(x[8:12])))
+library(DEqMS)
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
 
-#require minimum two observations in each condition
-dat.pep.filter =dat.pep[dat.pep$cond1_na_count<3 & 
-dat.pep$cond2_na_count<3,1:12]
-    
-dat.pep.log = dat.pep.filter
-dat.pep.log[,3:12] = log2(dat.pep.filter[,3:12])
-    
-dat.gene.nm = medianSweeping(dat.pep.log,group_col=2)
-    
-pep.count.table = as.data.frame(table(dat.pep.log$Leading.razor.protein))
-rownames(pep.count.table) = pep.count.table$Var1
-    
-cond = as.factor(c(rep("AF",5),rep("ANC",5)))
-design = model.matrix(~0+cond) # without intercept
-colnames(design) = c("AF","ANC")
-    
-protein.matrix = as.matrix(dat.gene.nm)
-    
-fit1 = lmFit(protein.matrix,design = design)
-cont <- makeContrasts(AF-ANC, levels = design)
-fit2 = contrasts.fit(fit1,contrasts = cont)
-fit3 <- eBayes(fit2)
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
 
-fit3$count = pep.count.table[rownames(fit3$coefficients),2]
-fit4 = spectraCounteBayes(fit3)
+dat.gene.nm = medianSweeping(dat.psm.log,group_col = 2)
     
-DEqMS.results = outputResult(fit4, coef_col=1)
+psm.count.table = as.data.frame(table(dat.psm$gene)) # generate PSM count table
+rownames(psm.count.table)=psm.count.table$Var1
+    
+cond = c("ctrl","miR191","miR372","miR519","ctrl",
+"miR372","miR519","ctrl","miR191","miR372")
+
+sampleTable <- data.frame(
+row.names = colnames(dat.psm)[3:12],
+cond = as.factor(cond)
+)
+    
+gene.matrix = as.matrix(dat.gene.nm)
+design = model.matrix(~cond,sampleTable)
+
+fit1 <- eBayes(lmFit(gene.matrix,design))
+# add PSM count for each gene
+fit1$count <- psm.count.table[rownames(fit1$coefficients),2]  
+
+fit2 = spectraCounteBayes(fit1)
+    
+DEqMS.results = outputResult(fit2, coef_col=3)
 }
 \author{
 Yafeng Zhu

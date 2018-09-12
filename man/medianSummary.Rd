@@ -21,12 +21,16 @@ a data frame containing protein relative abundance estimate in log2 scale
 This function is to calculate proteins'relative abundance by median method}
 
 \examples{
-dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
-dat.pep[dat.pep==0] <- NA
-dat.pep.log = dat.pep
-dat.pep.log[,3:12] = log2(dat.pep[,3:12])
-dat.gene = medianSummary(dat.pep.log,group_col=2,ref_col=3:5)
-dat.gene.nm = equalMedianNormalization(dat.gene)
+library(DEqMS)
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
+
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
+# use the 3 ctrl samples as reference channels to calculate log2 ratio
+dat.gene = medianSummary(dat.psm.log,group_col = 2,ref_col =c(3,7,10))
 }
 \author{
 Yafeng Zhu

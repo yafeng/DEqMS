@@ -18,10 +18,13 @@ a data frame containing protein relative abundance estimate in log2 scale
 This function is to calculate proteins'relative abundance by factor analysis}
 
 \examples{
-dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
-dat.pep[dat.pep==0] <- NA
+library(DEqMS)
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
 # farms method does not tolerate missing values
-dat.gene = farmsSummary(na.omit(dat.pep),group_col=2) 
+dat.gene = farmsSummary(dat.psm,group_col=2) 
 }
 \author{
 Yafeng Zhu

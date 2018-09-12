@@ -21,12 +21,16 @@ in different samples.
 return a ggplot2 object
 }
 \examples{
-dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
-dat.pep[dat.pep==0] <- NA
-dat.pep.log = na.omit(dat.pep)
-dat.pep.log[,3:12] = log2(dat.pep.log[,3:12])
+library(DEqMS)
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
+
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
     
-peptideProfilePlot(dat.pep.log,col=2,gene="IPI00001159")
+peptideProfilePlot(dat.psm.log,col=2,gene="TGFBR2")
 
 }
 \author{

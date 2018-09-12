@@ -19,11 +19,16 @@ This function is to calculate proteins'relative abundance by
 Turkey median polish}
 
 \examples{
-dat.pep = readRDS(system.file("extdata","PXD007725.rds",package="DEqMS"))
-dat.pep[dat.pep==0] <- NA
-dat.pep.log = na.omit(dat.pep)
-dat.pep.log[,3:12] = log2(dat.pep.log[,3:12])
-dat.gene = medpolishSummary(dat.pep.log,group_col=2)
+library(DEqMS)
+library(ExperimentHub)
+eh = ExperimentHub()
+query(eh, "DEqMS")
+dat.psm = eh[["EH1663"]]
+
+dat.psm.log = dat.psm
+dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
+
+dat.gene = medpolishSummary(dat.psm.log,group_col=2)
 }
 \author{
 Yafeng Zhu
