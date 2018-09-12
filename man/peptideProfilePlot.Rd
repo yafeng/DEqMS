@@ -21,7 +21,6 @@ in different samples.
 return a ggplot2 object
 }
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")

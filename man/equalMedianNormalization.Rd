@@ -17,7 +17,6 @@ This function is to normaliza out the differences of protein medians in
 different samples}
 
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")

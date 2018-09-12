@@ -22,7 +22,6 @@ This function is to generate DEqMS outputs in a data frame.
 }
 
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")

@@ -29,7 +29,6 @@ return a plot graphic
 }
 
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")
@@ -60,7 +59,7 @@ fit1$count <- psm.count.table[rownames(fit1$coefficients),2]
 
 fit2 = spectraCounteBayes(fit1)
     
-plotFitCurve(fit4,type="boxplot",xlab="PSM count",
+plotFitCurve(fit2,type="boxplot",xlab="PSM count",
 main="TMT data PXD004163")
 }
 \author{

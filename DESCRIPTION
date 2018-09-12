@@ -1,5 +1,5 @@
 Package: DEqMS
-Version: 0.99.43
+Version: 0.99.44
 Date: 2018/09/12
 Title: a tool to perform statistical analysis of differential protein expression for quantitative proteomics data.
 Author: Yafeng Zhu
@@ -11,6 +11,6 @@ Description: DEqMS is developped on top of Limma. However, Limma assumes same pr
 License: LGPL
 biocViews: Proteomics, MassSpectrometry, Preprocessing, DifferentialExpression, MultipleComparison,Normalization,Bayesian
 VignetteBuilder: knitr
-Packaged: Sep 12 14:13:00 2018
+Packaged: Sep 12 15:13:00 2018
 BugReports: https://github.com/yafeng/DEqMS/issues
 

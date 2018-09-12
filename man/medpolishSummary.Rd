@@ -19,7 +19,6 @@ This function is to calculate proteins'relative abundance by
 Turkey median polish}
 
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")

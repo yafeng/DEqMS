@@ -37,7 +37,6 @@ quantification. The method is similar in nature to intensity-based Bayes
 method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")

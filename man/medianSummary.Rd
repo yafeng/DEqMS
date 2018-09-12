@@ -21,7 +21,6 @@ a data frame containing protein relative abundance estimate in log2 scale
 This function is to calculate proteins'relative abundance by median method}
 
 \examples{
-library(DEqMS)
 library(ExperimentHub)
 eh = ExperimentHub()
 query(eh, "DEqMS")
