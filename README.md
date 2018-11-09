@@ -3,9 +3,11 @@ DEqMS is a tool for quantitative proteomic analysis, developed by Yafeng Zhu @ K
 
 ## Installation
 ```{r}
-#try http:// if https:// URLs are not supported
-source("https://bioconductor.org/biocLite.R")
-biocLite("DEqMS")
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("DEqMS", version = "3.8")
+
 ```
 ## Introduction
 DEqMS works on top of Limma. However, Limma assumes same prior variance for all genes, the function `spectraCounteBayes` in DEqMS package  is able to correct the biase of prior variance estimate for genes identified with different number of PSMs/peptides. It works in a similar way to the intensity-based hierarchical Bayes method (Maureen A. Sartor et al BMC Bioinformatics 2006).
