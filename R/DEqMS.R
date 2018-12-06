@@ -1,4 +1,4 @@
-spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
+spectraCounteBayes<-function(fit,fit.method="spline",coef_col) {
     
     ################################################
     #  The function was adapted from:
@@ -11,20 +11,26 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     numgenes<-length(logVAR[df>0])
     df[df==0]<-NA
     eg<-logVAR-digamma(df/2)+log(df/2)
-    names(fit$count) = rownames(fit$coefficients)
+    names(fit$count) <- rownames(fit$coefficients)
     output<-fit
+    output$fit.method <- fit.method
 
     if (fit.method == "loess"){
-        x=log2(fit$count)
-        loess.model = loess(logVAR~x,span = 0.75)
-        y.pred = predict(loess.model)
-        output$loess.model = loess.model
+        x<-log2(fit$count)
+        loess.model <- loess(logVAR~x,span = 0.75)
+        y.pred <- fitted(loess.model)
+        output$model <- loess.model
     }else if (fit.method == "nls"){
-        x=fit$count
-        y=fit$sigma^2
-        nls.model =  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
-        y.pred = log(predict(nls.model))
-        output$nls.model = nls.model
+        x<-fit$count
+        y<-fit$sigma^2
+        nls.model <-  nls(y~a+b/x,start = (list(a=0.1,b=0.05)))
+        y.pred <- log(fitted(nls.model))
+        output$model <- nls.model
+    }else if (fit.method == "spline"){
+        x<-log2(fit$count)
+        spline.model <- smooth.spline(x,logVAR,cv=FALSE)
+        y.pred <- fitted(spline.model)
+        output$model <- spline.model
     }
     
     egpred<-y.pred-digamma(df/2)+log(df/2)
@@ -76,51 +82,55 @@ outputResult <-function(fit,coef_col=1){
     results.table = results.table[order(results.table$sca.P.Value), ]
 }
 
-plotFitCurve <- function (fit,fit.method="loess",type = "boxplot",
-    xlab="",main="") {
-    x = fit$count
-    y = fit$sigma^2
-    
-    if (fit.method=="nls"){
-        model = fit$nls.model
-        
-        if (type=="scatterplot"){
-            plot(log2(x),log(y),ylab="log(Variance)",xlab="log2(count)",
-                main= main)
-            
-            y.pred <- log(predict(model))
-            k = order(x)
-            lines(log2(x[k]),y.pred[k],col='red',lwd=3)
-            
-        }else if (type=="boxplot"){
-            df.temp = data.frame(pep_count =x, variance = y )
-            df.temp.filter = df.temp[df.temp$pep_count<21,]
-            boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
-                    ylab = "log(Variance)", main=main)
-            
-            y.pred <- log(predict(model,data.frame(x=seq(1,20))))
-            lines(seq(1,20),y.pred,col='red',lwd=3)
-        }else{stop("only scatterplot and boxplot are supported")}
-        
-    }else if (fit.method=="loess"){
-        model = fit$loess.model
-        if (type=="scatterplot"){
-            plot(log2(x),log(y),ylab="log(Variance)",main= main)
-            
-            y.pred <- predict(model)
-            k = order(x)
-            lines(log2(x[k]),y.pred[k],col='red',lwd=3)
-            
-        }else if (type=="boxplot"){
-            df.temp = data.frame(pep_count =x, variance = y )
-            df.temp.filter = df.temp[df.temp$pep_count<21,]
-            boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
-                    ylab = "log(Variance)", main=main)
-            
-            y.pred <- predict(model,log2(seq(1,20)))
-            lines(seq(1,20),y.pred,col='red',lwd=3)
-        }else{stop("only scatterplot and boxplot are supported")}
-    }  
+
+VarianceBoxplot <- function (fit, n=20, xlab="count",
+                             ylab = "log(Variance)", main=""){
+  x <- fit$count
+  y <- fit$sigma^2
+  
+  df.temp <- data.frame(pep_count =x, variance = y )
+  df.temp.filter <- df.temp[df.temp$pep_count<=n,]
+  
+  if (fit$fit.method=="nls"){
+    y.pred <- log(predict(fit$model,data.frame(x=seq(1,n))))
+  }else if (fit$fit.method=="loess"){
+    y.pred <- predict(fit$model,data.frame(x=log2(seq(1,n))))}
+  else if (fit$fit.method=="spline"){
+    y.pred <- predict(fit$model,x=log2(seq(1,n)))$y
+  }
+  
+  boxplot(log(variance)~pep_count,df.temp.filter, xlab=xlab,
+          ylab = ylab, main=main)
+  lines(seq(1,n),y.pred,col='red',lwd=3)
+  
+}
+
+VarianceScatterplot <- function (fit, xlab="log2(count)",
+                                 ylab = "log(Variance)",main=""){
+  x <- fit$count
+  y <- fit$sigma^2
+  
+  if (fit$fit.method=="nls"){
+    y.pred <- log(fitted(fit$model))
+  }else if (fit$fit.method=="loess" | fit$fit.method=="spline" ) {
+    y.pred <- fitted(fit$model)}
+  
+  plot(log2(x),log(y),ylab=ylab,xlab=xlab,main= main)
+  k = order(x)
+  lines(log2(x[k]),y.pred[k],col='red',lwd=3)
+  
+}
+
+Residualplot <- function (fit, xlab="log2(count)",
+                          ylab="Variance(fitted - observed)", main=""){
+  x <- fit$count
+  
+  if (fit$fit.method=="nls"){
+    y <- log(fitted(fit$model)) - log(fit$sigma^2)
+  }else if (fit$fit.method=="loess" | fit$fit.method=="spline") {
+    y <- residuals(fit$model)}
+  
+  plot(log2(x),y, pch=20, cex=0.5,ylab=ylab,xlab=xlab,main= main)
 }
 
 peptideProfilePlot <- function(dat,col=2,gene){
@@ -176,7 +186,6 @@ medpolishSummary <- function(dat,group_col=2) {
     rownames(dat.new) = dat.summary[,1]
     return (dat.new)
 }
-
 
 equalMedianNormalization <- function(dat) {
     sizefactor = matrixStats::colMedians(as.matrix(dat),na.rm = TRUE)

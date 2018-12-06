@@ -1,9 +1,9 @@
 Package: DEqMS
-Version: 0.99.44
-Date: 2018/09/12
+Version: 1.0.1
+Date: 2018/12/6
 Title: a tool to perform statistical analysis of differential protein expression for quantitative proteomics data.
 Author: Yafeng Zhu
-Maintainer: Yafeng Zhu <yafeng.zhu@ki.se>
+Maintainer: Yafeng Zhu <yafeng.zhu@outlook.com>
 Depends: R(>= 3.5),graphics,stats,ggplot2,limma(>= 3.34)
 Suggests: BiocStyle,knitr,rmarkdown,plyr,matrixStats,reshape2,farms,RColorBrewer,utils,ggrepel,pheatmap,ExperimentHub
 LazyLoad: yes
