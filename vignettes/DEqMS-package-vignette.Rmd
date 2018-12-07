@@ -12,8 +12,9 @@ author:
 - name: Alina Malyutina
   affiliation: University of Helsinki, Helsinki, Finland
 - name: Simon Anders
-- affiliation: Heidelberg University (ZMBH), Heidelberg, Germany
+  affiliation: Heidelberg University (ZMBH), Heidelberg, Germany
 - name: Janne Lehtiö
+  affiliation: Karolinska Institute, Stockholm, Sweden
 date: "`r Sys.Date()`"
 output: 
   BiocStyle::html_document:
@@ -52,10 +53,10 @@ at 1% peptide level FDR is used as input for downstream analysis.
 
 ## Loading the data and preprocess
 Read a tabular input in which PSMs are in rows and samples are in columns.
-Intenisty values were log transformed since systematic effects and variance 
+Intenisty values were log2 transformed since systematic effects and variance 
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
-```{r retrieveExampleData}
+```{r retrieveExampleData message=FALSE}
 ### retrieve example dataset
 library(ExperimentHub)
 eh = ExperimentHub()
@@ -96,7 +97,7 @@ Here, median sweeping is used to summarize PSMs intensities to protein log2
 ratios. In this procedure, we substract the spectrum log2 intensity from the 
 median log2 intensities of all samples. The relative abundance estimate for 
 each protein is calculated as the median over all PSMs belonging to this 
-protein. 
+protein.(Herbrich et al JPR 2012 and D'Angelo et al JPR 2016)
 Assume the log2 intensity of PSM `i` in sample `j` is $y_{i,j}$, its relative 
 log2 intensity of PSM `i` in sample `j` is $y'_{i,j}$: 
 $$y'_{i,j} = y_{i,j} - median_{j'\in ctrl}\ y_{i,j'} $$
@@ -113,12 +114,90 @@ boxplot(dat.gene.nm,xlab="TMT 10 channels",
         ylab="log2 relative protein abundance")
 ```
 
-## Ordinary T test
+## DEqMS analysis
+Limma assumes equal prior variance for all genes, the function 
+`spectraCounteBayes` in DEqMS package is able to correct the biase of prior 
+variance estimate for proteins quantified by different number of PSMs. It works 
+in a similar way to the intensity-based hierarchical Bayes method
+(Maureen A. Sartor et al BMC Bioinformatics 2006).
+Outputs of `spectraCounteBayes`:  
+object is augmented form of "fit" object from `eBayes` in Limma, with the 
+additions being:
+`sca.t` - Spectra Count Adjusted posterior t-value  
+`sca.p` - Spectra Count Adjusted posterior p-value  
+`sca.dfprior` - DEqMS estimated prior degrees of freedom  
+`sca.priorvar`- DEqMS estimated prior variance
+`sca.postvar` - DEqMS estimated posterior variance
+`model` - fitted model
+
+```{r DEqMS}
+gene.matrix = as.matrix(dat.gene.nm)
+colnames(gene.matrix) = as.character(sampleTable$cond)
+design = model.matrix(~cond,sampleTable)
+
+fit1 <- lmFit(gene.matrix,design)
+fit2 <- eBayes(fit1) # Limma analysis
+
+fit2$count = psm.count.table[rownames(fit2$coefficients),]$Freq
+fit3 = spectraCounteBayes(fit2)
+DEqMS.results = outputResult(fit3,coef_col = 3) # extract DEqMS results
+head(DEqMS.results)
+```
+
+Generate variance ~ PMS count boxplot, check if the DEqMS correctly find the relation between prior variance and PSM count
+```{r PriorVarianceTrend}
+VarianceBoxplot(fit3,n=20, xlab="PSM count") # n=20 plot only genes with PSM count <=20
+```
+
+# Comparing DEqMS to Limma
+## Compare prior variance and posterior variance in Limma and DEqMS
+
+Visualize the prior variance estimated from DEqMS and Limma
+```{r PriorVar}
+VarianceScatterplot(fit3, xlab="log2(PSM count)")
+limma.prior = fit3$s2.prior
+abline(h = log(limma.prior),col="green",lwd=3 )
+legend("topright",legend=c("DEqMS prior variance","Limma prior variance"),
+        col=c("red","green"),lwd=3)
+```
+
+Generate residual plot to evaluate the fit model in DEqMS
+```{r DEqMSResidualplot}
+Residualplot(fit3,  xlab="log2(PSM count)",main="DEqMS")
+```
+
+Make the same plot for Limma
+```{r DEqMSResidualplot}
+x = fit3$count
+y = log(limma.prior) - log(fit3$sigma^2)
+plot(log2(x),y,ylim=c(-6,2),ylab="Variance(estimated-observed)", pch=20, cex=0.5,
+     xlab = "log2(PSMcount)",main="Limma")
+```     
+
+Visualize the change of posterior variance after PSM count adjustment. 
+The plot here shows posterior variance of proteins "shrink" toward the 
+fitted value to different extent depending on PSM number. 
+```{r PostVar, echo=TRUE, fig.height=5, fig.width=10}
+x = fit3$count
+y = fit3$s2.post # Limma posterior variance
+
+op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
+plot(log2(x),log(y),pch=20, cex=0.5, xlab = "log2(PSMcount)", 
+    ylab="log(Variance)",
+    main="Posterior Variance in Limma")
+
+y = fit3$sca.postvar # DEqMS posterior variance
+plot(log2(x),log(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
+    ylab="log(Variance)", 
+    main="Posterior Variance in DEqMS")
+```
+
+## Compare p-values from DEqMS to ordinary t-test, anova and Limma
 We first apply t.test to detect significant protein changes between ctrl 
 samples and miR372 treated samples, both have three replicates.
 
+## T-test analysis
 ```{r t-test}
-
 pval.372 = apply(dat.gene.nm, 1, function(x) 
 t.test(as.numeric(x[c(1,5,8)]), as.numeric(x[c(3,6,10)]))$p.value)
 
@@ -140,23 +219,9 @@ head(ttest.results)
 ## Anova analysis
 Anova analysis is equivalent to linear model analysis. The difference to 
 Limma analysis is that estimated variance is not moderated using empirical 
-bayesian approach as it is done in Limma. The purpose here is to compare 
-the statistical power to that when Limma is applied. 
-
-We first make a design matrix and then use `lmFit` function in Limma for 
-linear model analysis. The input for `lmFit` function is a matrix of relative 
-protein abundance (log2 ratios) and a design matrix containing sample 
-annotation. Use `head(fit$coefficients)` to see effect size(fold change)  of 
-genes for different conditions.
+bayesian approach as it is done in Limma.
 
 ```{r Anova}
-library(limma)
-gene.matrix = as.matrix(dat.gene.nm)
-colnames(gene.matrix) = as.character(sampleTable$cond)
-design = model.matrix(~cond,sampleTable)
-
-fit1 <- lmFit(gene.matrix,design)
-
 ord.t = fit1$coefficients[, 3]/fit1$sigma/fit1$stdev.unscaled[, 3]
 ord.p = 2*pt(-abs(ord.t), fit1$df.residual)
 ord.q = p.adjust(ord.p,method = "BH")
@@ -172,21 +237,10 @@ anova.results = anova.results[with(anova.results,order(P.Value)),]
 head(anova.results)
 ```
 
-## Limma analysis
-Limma is essentially a combination of linear model analysis and empirical 
-bayeisan estimation of variance, the latter is applied to increase the 
-statistical power by borrowing informations across genes to shrink the
-variance. 
-
-```{r Limma}
-fit2 <- eBayes(lmFit(gene.matrix,design))
-head(fit2$coefficients)
-```
-
+## Extract Limma result
 Extract limma results using `topTable` function,  `coef = 3` allows you to 
 extract the contrast of specific condition (miR372), option `n= Inf` output 
-all rows.
-Add PSM count values in the table.
+all rows. Add PSM count values in the table.
 ```{r,echo=TRUE}
 limma.results = topTable(fit2,coef = 3,n= Inf)
 limma.results$gene = rownames(limma.results)
@@ -194,95 +248,6 @@ limma.results$PSMcount = psm.count.table[limma.results$gene,]$Freq
 
 head(limma.results)
 ```
-
-
-## Variance dependence on spectra count
-We observed that the variance of gene across samples gradually decreases 
-as the number of spectra count increases.
-```{r Variance, echo=TRUE, fig.height=5, fig.width=10}
-dat.temp = data.frame(var = fit2$sigma^2,
-                        PSMcount = psm.count.table[names(fit2$sigma),]$Freq)
-dat.temp.filter = dat.temp[dat.temp$PSMcount<21,]
-
-op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
-plot(log2(psm.count.table[rownames(dat.gene.nm),2]),
-    dat.gene.nm[,1]-dat.gene.nm[,5],pch=20,cex=0.5,
-    xlab="log2(PSM count)",ylab="log2 ratio between two ctrl replicates")
-
-boxplot(log2(var)~PSMcount,dat.temp.filter,xlab="PSMcount",
-        ylab="log2(Variance)")
-
-```
-
-## DEqMS analysis
-Limma assumes equal prior variance for all genes, the function 
-`spectraCounteBayes` in DEqMS package is able to correct the biase of prior 
-variance estimate for proteins quantified by different number of PSMs. It works 
-in a similar way to the intensity-based hierarchical Bayes method
-(Maureen A. Sartor et al BMC Bioinformatics 2006).
-Outputs of `spectraCounteBayes`:  
-object is augmented form of "fit" object from `eBayes` in Limma, with the 
-additions being:
-`sca.t` - Spectra Count Adjusted posterior t-value  
-`sca.p` - Spectra Count Adjusted posterior p-value  
-`sca.dfprior` - estimated prior degrees of freedom  
-`sca.priorvar`- estimated prior variance
-`sca.postvar` - estimated posterior variance
-`loess.model` - fitted loess model
-
-```{r DEqMS}
-fit2$count = psm.count.table[rownames(fit2$coefficients),]$Freq
-
-fit3 = spectraCounteBayes(fit2)
-DEqMS.results = outputResult(fit3,coef_col = 3)
-head(DEqMS.results)
-```
-
-Check if the fitted variance ~ PMS count model is correct.
-```{r PriorVarianceTrend}
-plotFitCurve(fit3,type = "boxplot",xlab="PSM count")
-```
-
-
-# Comparing Limma and DEqMS
-## Compare prior variance and posterior variance in Limma and DEqMS
-
-Visualize the prior variance fitted by Limma and DEqMS
-```{r PriorVar}
-x = fit3$count
-y = fit3$sigma^2
-
-limma.prior = fit3$s2.prior
-DEqMS.prior = fit3$sca.priorvar
-
-plot(log2(x),log(y),pch=20, cex=0.5,xlab = "log2(PSMcount)",
-     ylab="log(Variance)")
-abline(h = log(limma.prior),col="green",lwd=3 )
-k=order(x)
-lines(log2(x[k]),log(DEqMS.prior[k]),col="red",lwd=3 )
-legend("topright",legend=c("Limma prior variance","DEqMS prior variance"),
-        col=c("green","red"),lwd=3)
-```
-
-
-Visualize the change of posterior variance after PSM count adjustment. 
-The plot here shows posterior variance of proteins "shrink" toward the 
-fitted value to different extent depending on PSM number. 
-```{r PostVar, echo=TRUE, fig.height=5, fig.width=10}
-x = fit3$count
-y = fit3$s2.post
-
-op <- par(mfrow=c(1,2), mar=c(4,4,4,1), oma=c(0.5,0.5,0.5,0))
-plot(log2(x),log(y),pch=20, cex=0.5, xlab = "log2(PSMcount)", 
-    ylab="log(Variance)",
-    main="Posterior Variance in Limma")
-
-y = fit3$sca.postvar
-plot(log2(x),log(y),pch=20,cex=0.5, xlab = "log2(PSMcount)",
-    ylab="log(Variance)", 
-    main="Posterior Variance in DEqMS")
-```
-
 
 ## Comparing p-values by different analysis.
 plotting top 500 genes ranked by p-values.
@@ -318,7 +283,7 @@ peptideProfilePlot(dat=dat.psm.log.ordered,col=2,gene="TGFBR2")
 ```{r volcanoplot1}
 library(ggrepel)
 
-# to plot adjusted p-values by BH method on y-axis
+# if you wish plot adjusted p-values by BH method on y-axis
 DEqMS.results$log.adj.pval = -log10(DEqMS.results$sca.adj.pval) 
 ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) + 
     geom_point(size=0.5 )+
@@ -336,11 +301,12 @@ ggplot(DEqMS.results, aes(x = logFC, y = log.adj.pval)) +
 
 you can also use `volcanoplot` function from Limma. However, it uses `p.value`
 from Limma. If you want to plot `sca.pvalue` from `DEqMS`, you need to modify
-the fit object.
+the fit object. (original p-values are plotted here)
 
 ```{r volcanoplot2}
-fit3$p.value = fit3$sca.p
-volcanoplot(fit3,coef=3, style = "p-value", highlight = 20,
+fit3$Limma.p.value = fit3$p.value # keep Limma p.value before replacing it
+fit3$p.value = fit3$sca.p # replace Limma p.value with DEqMS p.value
+volcanoplot(fit3, coef=3, style = "p-value", highlight = 20,
             names=rownames(fit3$coefficients))
 ```
 
