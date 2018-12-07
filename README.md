@@ -6,7 +6,10 @@ DEqMS is a tool for quantitative proteomic analysis, developed by Yafeng Zhu @ K
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("DEqMS", version = "3.8")
+BiocManager::install("DEqMS", version = "3.8")# current bioconductor release
+
+# To install from latest development branch
+BiocManager::install("DEqMS", version = "3.9")
 
 ```
 ## Introduction
@@ -127,7 +130,7 @@ fit2 = spectraCounteBayes(fit1)
 ### 6. plot the fitted prior variance
 Check fitted relation between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, y is log pooled variances calculated for each gene.
 ```{r}
-VarianceBoxplot(fit2,n=30, main="TMT10 dataset PXD004163", xlab="PSM count) # this function only exists in latest devel version
+VarianceBoxplot(fit2,n=30, main="TMT10 dataset PXD004163", xlab="PSM count) # this function only available in latest devel branch
 ```
 
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png)
@@ -209,7 +212,7 @@ fit4 = spectraCounteBayes(fit3)
 
 ### 6. plot the fitted prior variance
 ```{r}
-plotFitCurve(fit4,type = "boxplot",main = "Label-free dataset PXD0007725",xlab="peptide count")
+VarianceBoxplot(fit4, n=20, main = "Label-free dataset PXD0007725",xlab="peptide count")
 ```
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD007725.png)
 
@@ -220,6 +223,7 @@ write.table(AF.results,"AF.DEqMS.results.txt",sep = "\t",row.names = F,quote=F)
 ```
 
 ## Analyze multiple TMT sets, start from gene tabe
+```{r}
 df.gene = read_xlsx("BC_cellline_gene.xlsx") # this gene table contains gene ratios from six TMT10plex sets
 df.gene = df.gene[df.gene$`Cross-set picked q-value`<0.01,] # filter genes by 1% FDR
 
@@ -227,7 +231,6 @@ df.ratio = as.data.frame(df.gene[,3:56]) # extract quant values of 54 samples fr
 rownames(df.ratio) = df.gene$gene
 
 df.log = log2(df.ratio) # ratios are log2 transformed
-
 df.log.narm = na.omit(df.log) # remove genes with missing values
 
 library(matrixStats)
@@ -239,8 +242,11 @@ df.count = na.omit(df.count)
 df.count$median = round(rowMedians(as.matrix(df.count[,1:60])))
 gene.matrix = as.matrix(df.log.narm)
 
+#read in annotation table
 df.annot = read.table("BC_cellline_annotation.txt",header = T,sep = "\t")
-## specificaly make comparisons between two cell lines, eg LCC2 vs MCF7
+```
+Specificaly make comparisons between two cell lines, eg LCC2 vs MCF7
+```{r}
 design = model.matrix(~0+Cell.line,df.annot) # no intercept
 colnames(design) = gsub("Cell.line","",colnames(design))
 fit1 = lmFit(gene.matrix,design = design)
@@ -251,3 +257,4 @@ fit2$count = df.count[rownames(fit2$coefficients),]$median
 fit3 = spectraCounteBayes(fit2)
 
 DEqMS.result = outputResult(fit3)
+```
