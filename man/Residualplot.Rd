@@ -6,7 +6,7 @@ Residualplot(fit, xlab="log2(count)",
 ylab="Variance(fitted - observed)", main="")
 }
 \arguments{
-\item{fit}{an object returned from spectraCounteBayes function}
+\item{fit}{an object returned from \code{spectraCounteBayes} function}
 \item{xlab}{the title for x axis}
 \item{ylab}{the title for y axis}
 \item{main}{the title for the figure}

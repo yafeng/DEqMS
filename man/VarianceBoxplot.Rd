@@ -5,7 +5,7 @@
 VarianceBoxplot(fit,n=20, xlab="count", ylab = "log(Variance)", main="")
 }
 \arguments{
-\item{fit}{an object returned from spectraCounteBayes function}
+\item{fit}{an object returned from \code{spectraCounteBayes} function}
 \item{n}{set a number to plot only the genes with count value smaller or equal 
 to n}
 \item{xlab}{the title for x axis}
