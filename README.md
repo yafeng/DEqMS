@@ -25,15 +25,16 @@ object is augmented form of "fit" object from `eBayes` in Limma, with the additi
 
 `sca.postvar` - estimated posterior variance
 
-`loess.model` - fitted model
+`model` - fitted model
+
+`fit.method` - the method used to fit the model 
 
 ## analyze TMT labelled dataset
 ### 1. load R packages
 ```{r}
 library(DEqMS)
 ```
-
-### 2. Read input data and generate count table.
+### Read PSM input data
 Since the input data used in DEqMS is PSM or peptide level data, it is highly recommended to filter them based protein level 1% FDR. (Grouping PSMs or peptides usually generate larger list of protiens)
 The first two columns in input table should be peptide sequence and protein/gene names, intensity values for different samples start from 3rd columns. It is important the input file is arranged in this way.
 
@@ -126,7 +127,7 @@ fit2 = spectraCounteBayes(fit1)
 ### 6. plot the fitted prior variance
 Check fitted relation between piror variance and peptide/PSMs count works as expected. It should look similar to the plot below. Red curve is fitted value for prior variance, y is log pooled variances calculated for each gene.
 ```{r}
-plotFitCurve(fit2,type = "boxplot", main="TMT10 dataset PXD004163", xlab="PSM count)
+VarianceBoxplot(fit2,n=30, main="TMT10 dataset PXD004163", xlab="PSM count) # this function only exists in latest devel version
 ```
 
 ![My image](https://github.com/yafeng/DEqMS/blob/master/image/PXD004163.png)
@@ -217,3 +218,36 @@ plotFitCurve(fit4,type = "boxplot",main = "Label-free dataset PXD0007725",xlab="
 AF.results = outputResult(fit4,coef_col = 1)
 write.table(AF.results,"AF.DEqMS.results.txt",sep = "\t",row.names = F,quote=F)
 ```
+
+## Analyze multiple TMT sets, start from gene tabe
+df.gene = read_xlsx("BC_cellline_gene.xlsx") # this gene table contains gene ratios from six TMT10plex sets
+df.gene = df.gene[df.gene$`Cross-set picked q-value`<0.01,] # filter genes by 1% FDR
+
+df.ratio = as.data.frame(df.gene[,3:56]) # extract quant values of 54 samples from column 3 to 56
+rownames(df.ratio) = df.gene$gene
+
+df.log = log2(df.ratio) # ratios are log2 transformed
+
+df.log.narm = na.omit(df.log) # remove genes with missing values
+
+library(matrixStats)
+df.count = as.data.frame(df.gene[,57:116]) ## extract number of quantified PSMs for in total 60 TMT channels
+rownames(df.count) = df.gene$gene
+df.count = na.omit(df.count)
+
+#use median number of PSM count across sets
+df.count$median = round(rowMedians(as.matrix(df.count[,1:60])))
+gene.matrix = as.matrix(df.log.narm)
+
+df.annot = read.table("BC_cellline_annotation.txt",header = T,sep = "\t")
+## specificaly make comparisons between two cell lines, eg LCC2 vs MCF7
+design = model.matrix(~0+Cell.line,df.annot) # no intercept
+colnames(design) = gsub("Cell.line","",colnames(design))
+fit1 = lmFit(gene.matrix,design = design)
+cont <- makeContrasts(LCC2-T47D, levels = design)
+fit2 = eBayes(contrasts.fit(fit1,contrasts = cont))
+
+fit2$count = df.count[rownames(fit2$coefficients),]$median
+fit3 = spectraCounteBayes(fit2)
+
+DEqMS.result = outputResult(fit3)
