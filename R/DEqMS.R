@@ -58,7 +58,7 @@ spectraCounteBayes<-function(fit,fit.method="spline",coef_col) {
     # sca.t and scc.p stands for spectra count adjusted t and p values.  
     sca.t<-as.matrix(fit$coefficients[,coef_col]/(fit$stdev.unscaled[,coef_col]
     *sqrt(post.var)))
-    sca.p<-as.matrix(2*(1-pt(abs(sca.t),post.df)))
+    sca.p<-as.matrix(2*pt(abs(sca.t),post.df,lower.tail = FALSE))
     
     output$sca.t<-sca.t
     output$sca.p<-sca.p
