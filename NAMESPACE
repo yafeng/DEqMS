@@ -3,7 +3,7 @@ export("outputResult")
 export("VarianceBoxplot")
 export("VarianceScatterplot")
 export("Residualplot")
-expor("peptideProfilePlot")
+export("peptideProfilePlot")
 export("medianSummary")
 export("medpolishSummary")
 export("equalMedianNormalization")
@@ -11,7 +11,7 @@ export("medianSweeping")
 export("farmsSummary")
 
 importFrom("graphics", "boxplot", "lines", "plot")
-importFrom("stats", "loess", "na.omit", "nls", 
-"p.adjust", "predict", "pt","medpolish")
+importFrom("stats", "loess", "na.omit", "nls", smooth.spline,
+p.adjust", "predict", "pt","medpolish")
 importFrom("limma","topTable","volcanoplot")
 importFrom("ggplot2","ggplot","geom_point","geom_line","ggtitle","theme","xlab","ylab","aes","element_text")
