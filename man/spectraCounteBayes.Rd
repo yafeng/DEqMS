@@ -3,21 +3,23 @@
 \title{Peptide/Spectra Count Based Empirical Bayes Statistics for Differential 
 Expression}
 \usage{
-spectraCounteBayes(fit, fit.method="spline", coef_col)
+spectraCounteBayes(fit, fit.method="loess", coef_col)
 }
 \arguments{
 \item{fit}{an list object produced by Limma \code{eBayes} function, it should 
-have one additional attribute fit$count, which stored the peptide or PSM count 
+have one additional attribute \code{$count}, which stored the peptide or PSM count 
 quantified for the gene in label-free or isobaric labelled data.}
 
 \item{fit.method}{the method used to fit variance against the number of 
 peptides/PSM count quantified. Two available methods: "loess","nls" and 
-"spline". default "spline"."loess" uses \code{loess} and span = 0.75, "nls"" 
+"spline". default "loess"."loess" uses \code{loess} and span = 0.75, "nls"" 
 uses a explicit formula \code{y~a+b/x}. "spline" uses \code{smooth.spline} and 
-"generalized cross-validation" for smoothing parameter computation. Here, 
+"generalized cross-validation" for smoothing parameter computation. For "nls", 
 independent variable x is peptide/PSM count, response y is pooled variance 
 (\code{fit$sigma^2}). For "loess" and "spline" method, both x and y are log
-transformed before applying the two methods.}
+transformed before applying the two methods. In most of time, "loess" is sufficient.
+To quickly assess the fit model, use \code{VarianceScatterplot} and
+\code{Residualplot} functions.}
 
 \item{coef_col}{an integer vector indicating the column(s) of fit$coefficients 
 for which the function is to be performed. if not specified, all coefficients 

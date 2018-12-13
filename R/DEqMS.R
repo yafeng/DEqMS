@@ -1,4 +1,4 @@
-spectraCounteBayes<-function(fit,fit.method="spline",coef_col) {
+spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     
     ################################################
     #  The function was adapted from:
