@@ -27,15 +27,15 @@ are used.}
 
 }
 \value{
-a list object with the additional attributes
-\item{count} {Peptide or PSM count used for quantification}
-\item{sca.t} {Spectra Count Adjusted posterior t-value}
-\item{sca.p} {Spectra Count Adjusted posterior p-value}
-\item{sca.dfprior} {Spectra Count Adjusted prior degrees of freedom}
-\item{sca.priorvar} {Spectra Count Adjusted prior variance}
-\item{sca.postvar} {Spectra Count Adjusted posterior variance}
-\item{model} {fitted model}
-\item{fit.method} {The method used to fit the model}
+a list object with the following components
+\item{count}{Peptide or PSM count used for quantification}
+\item{sca.t}{Spectra Count Adjusted posterior t-value}
+\item{sca.p}{Spectra Count Adjusted posterior p-value}
+\item{sca.dfprior}{Spectra Count Adjusted prior degrees of freedom}
+\item{sca.priorvar}{Spectra Count Adjusted prior variance}
+\item{sca.postvar}{Spectra Count Adjusted posterior variance}
+\item{model}{fitted model}
+\item{fit.method}{The method used to fit the model}
 }
 \description{
 This function is to calculate peptide/PSM count adjusted t-statistics, p-values.
