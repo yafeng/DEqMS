@@ -56,7 +56,7 @@ Read a tabular input in which PSMs are in rows and samples are in columns.
 Intenisty values were log2 transformed since systematic effects and variance 
 components are usually assumed to be additive on log scale (Oberg AL. et al 
 JPR 2008; Hill EG. et al JPR 2008).
-```{r retrieveExampleData message=FALSE}
+```{r retrieveExampleData, message=FALSE}
 ### retrieve example dataset
 library(ExperimentHub)
 eh = ExperimentHub()
@@ -167,7 +167,7 @@ Residualplot(fit3,  xlab="log2(PSM count)",main="DEqMS")
 ```
 
 Make the same plot for Limma
-```{r DEqMSResidualplot}
+```{r LimmaResidualplot}
 x = fit3$count
 y = log(limma.prior) - log(fit3$sigma^2)
 plot(log2(x),y,ylim=c(-6,2),ylab="Variance(estimated-observed)", pch=20, cex=0.5,
@@ -223,7 +223,7 @@ bayesian approach as it is done in Limma.
 
 ```{r Anova}
 ord.t = fit1$coefficients[, 3]/fit1$sigma/fit1$stdev.unscaled[, 3]
-ord.p = 2*pt(-abs(ord.t), fit1$df.residual)
+ord.p = 2*pt(abs(ord.t), fit1$df.residual, lower.tail = FALSE)
 ord.q = p.adjust(ord.p,method = "BH")
 anova.results = data.frame(gene=names(fit1$sigma),
                             logFC=fit1$coefficients[,3],
