@@ -2,11 +2,11 @@
 DEqMS is a statistical tool for testing differential protein expression in quantitative proteomic analysis, developed by Yafeng Zhu @ Karolinska Institutet. Manuscript submitted.
 
 ## Installation
-To install this package, start R (version "3.6") and enter:
+To install lastest DEqMS package (v1.2.0), start R (version "3.6", released on 2019-04-26) and enter:
 ```{r}
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+    install.packages("BiocManager",version="3.9")
 BiocManager::install("DEqMS")
 
 ```
