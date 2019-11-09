@@ -23,7 +23,7 @@ This function is to generate DEqMS outputs in a data frame.
 
 \examples{
 library(ExperimentHub)
-eh = ExperimentHub()
+eh = ExperimentHub(localHub=TRUE)
 query(eh, "DEqMS")
 dat.psm = eh[["EH1663"]]
 

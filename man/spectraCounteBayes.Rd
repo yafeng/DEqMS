@@ -48,7 +48,7 @@ method (Maureen A. Sartor et al BMC Bioinformatics 2006).
 }
 \examples{
 library(ExperimentHub)
-eh = ExperimentHub()
+eh = ExperimentHub(localHub=TRUE)
 query(eh, "DEqMS")
 dat.psm = eh[["EH1663"]]
 

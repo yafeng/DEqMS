@@ -19,7 +19,7 @@ This function is to calculate proteins'relative abundance by factor analysis}
 
 \examples{
 library(ExperimentHub)
-eh = ExperimentHub()
+eh = ExperimentHub(localHub=TRUE)
 query(eh, "DEqMS")
 dat.psm = eh[["EH1663"]]
 # farms method does not tolerate missing values

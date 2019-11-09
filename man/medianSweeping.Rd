@@ -20,7 +20,7 @@ median sweeping method}
 
 \examples{
 library(ExperimentHub)
-eh = ExperimentHub()
+eh = ExperimentHub(localHub=TRUE)
 query(eh, "DEqMS")
 dat.psm = eh[["EH1663"]]
 
