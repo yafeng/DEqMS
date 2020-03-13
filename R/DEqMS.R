@@ -191,7 +191,7 @@ equalMedianNormalization <- function(dat, optional_outfile) {
     sizefactor = matrixStats::colMedians(as.matrix(dat),na.rm = TRUE)
     dat.nm = sweep(dat,2,sizefactor)
     if (!missing(optional_outfile)) {
-      write.table(data.frame(channels=colnames(x), medians=sizefactor), optional_outfile, sep='\t', header=T)
+      write.table(data.frame(channels=colnames(dat), medians=sizefactor), optional_outfile, sep='\t', header=T)
     }
     return (dat.nm)
 }
