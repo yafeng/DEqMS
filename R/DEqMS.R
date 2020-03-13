@@ -187,13 +187,16 @@ medpolishSummary <- function(dat,group_col=2) {
     return (dat.new)
 }
 
-equalMedianNormalization <- function(dat) {
+equalMedianNormalization <- function(dat, optional_outfile) {
     sizefactor = matrixStats::colMedians(as.matrix(dat),na.rm = TRUE)
     dat.nm = sweep(dat,2,sizefactor)
+    if (!missing(optional_outfile)) {
+      write.table(data.frame(channels=colnames(x), medians=sizefactor), optional_outfile, sep='\t', header=T)
+    }
     return (dat.nm)
 }
 
-medianSweeping <- function(dat,group_col=2) {
+medianSweeping <- function(dat,group_col=2,channelmedian_outfile) {
     dat.ratio = dat
     dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
         matrixStats::rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = TRUE)
@@ -204,7 +207,7 @@ medianSweeping <- function(dat,group_col=2) {
     dat.new = dat.summary[,-1]
     rownames(dat.new) = dat.summary[,1]
     
-    dat.nm = equalMedianNormalization(dat.new)
+    dat.nm = equalMedianNormalization(dat.new, optional_outfile=channelmedian_outfile)
     return (dat.nm)
 }
 
