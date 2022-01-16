@@ -224,7 +224,7 @@ extracts (50 µg) in triplicates (Cox J et al MCP 2014). The data was searched
 by MaxQuant software and the output file "proteinGroups.txt" was used here.
 
 ```{r DownloadLabelfreeData}
-url2 <- "ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2014/09/PXD000279/proteomebenchmark.zip"
+url2 <- "https://ftp.ebi.ac.uk/pride-archive/2014/09/PXD000279/proteomebenchmark.zip"
 download.file(url2, destfile = "./PXD000279.zip",method = "auto")
 unzip("PXD000279.zip")
 ```
