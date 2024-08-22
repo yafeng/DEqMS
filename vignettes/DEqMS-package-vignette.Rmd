@@ -61,6 +61,7 @@ protein table filtered at 1% protein level FDR is used.
 
 ### Download and Read the input protein table
 ```{r DownloadProteinTable}
+options(timeout = 1000)
 url <- "https://ftp.ebi.ac.uk/pride-archive/2016/06/PXD004163/Yan_miR_Protein_table.flatprottable.txt"
 download.file(url, destfile = "./miR_Proteintable.txt",method = "auto")
 
