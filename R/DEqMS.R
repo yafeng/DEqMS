@@ -13,6 +13,13 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     eg<-logVAR-digamma(df/2)+log(df/2)
     names(fit$count) <- rownames(fit$coefficients)
     
+    if (is.na(min(fit$count)){
+      stop("NA values found in fit3$count, Function exits!")
+    }else if (min(fit$count==0)){
+      print("minimum count is zero, add pseudocount 1")
+      fit$count=fit$count+1
+    }
+    
     output<-fit
     output$fit.method <- fit.method
 
