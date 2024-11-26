@@ -12,6 +12,7 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     df[df==0]<-NA
     eg<-logVAR-digamma(df/2)+log(df/2)
     names(fit$count) <- rownames(fit$coefficients)
+    
     output<-fit
     output$fit.method <- fit.method
 
@@ -154,6 +155,7 @@ peptideProfilePlot <- function(dat,col=2,gene){
 
 
 medianSummary <- function(dat,group_col=2,ref_col) {
+    colnames(dat)[group_col] = gsub(" ",".",colnames(dat)[group_col])
     dat.ratio = dat
     if (length(ref_col)>1){
         dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
@@ -178,6 +180,7 @@ medianPolish <- function (m) {
 }
 
 medpolishSummary <- function(dat,group_col=2) {
+    colnames(dat)[group_col] = gsub(" ",".",colnames(dat)[group_col])
     dat.summary = plyr::ddply(dat,colnames(dat)[group_col],
     function(x) medianPolish(as.matrix(x[,3:ncol(dat)])))
     
@@ -197,6 +200,7 @@ equalMedianNormalization <- function(dat, optional_outfile) {
 }
 
 medianSweeping <- function(dat,group_col=2,channelmedian_outfile) {
+    colnames(dat)[group_col] = gsub(" ",".",colnames(dat)[group_col])
     dat.ratio = dat
     dat.ratio[,3:ncol(dat)] = dat.ratio[,3:ncol(dat)] - 
         matrixStats::rowMedians(as.matrix(dat.ratio[,3:ncol(dat)]),na.rm = TRUE)
