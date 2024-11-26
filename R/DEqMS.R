@@ -211,26 +211,3 @@ medianSweeping <- function(dat,group_col=2,channelmedian_outfile) {
     return (dat.nm)
 }
 
-farmsMethod <- function(df){
-    if (nrow(df)==1){
-        dat = log2(as.matrix(df))
-    }else {dat = farms::generateExprVal.method.farms(
-        as.matrix(na.omit(df)))$expr}
-    return (dat)
-}
-
-farmsSummary <- function(dat,group_col=2) {
-    dat.log = plyr::ddply(dat,colnames(dat)[group_col],
-    function(x) farmsMethod(x[,3:ncol(dat)]))
-    
-    colnames(dat.log)[2:ncol(dat.log)]=colnames(dat)[3:ncol(dat)]
-    
-    dat.ratio = dat.log
-    dat.ratio[,2:ncol(dat.ratio)]= dat.log[,2:ncol(dat.log)] - 
-    matrixStats::rowMedians(as.matrix(dat.log[,2:ncol(dat.log)]),na.rm = TRUE)
-    
-    dat.summary = dat.ratio[,-1]
-    rownames(dat.summary) = dat.ratio[,1]
-    
-    return (dat.summary)
-}
