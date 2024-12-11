@@ -50,8 +50,8 @@ reference manual on the DEqMS Bioconductor page.
 library(DEqMS)
 ```
 
-# Quick start
-## Differential protein expression analysis with DEqMS using a protein table
+# Analyze label-free DDA quantitative proteomics data
+## Differential protein expression analysis of TMT labelled data with DEqMS using a protein table
 As an example, we analyzed a protemoics dataset (TMT10plex labelled) in which 
 A431 cells (human epidermoid carcinoma cell line) were treated with three 
 different miRNA mimics (Zhou Y. Et al Oncogene 2017). The raw MS data was 
@@ -218,7 +218,7 @@ volcanoplot(fit4,coef=1, style = "p-value", highlight = 20,
             names=rownames(fit4$coefficients))
 ```
 
-## DEqMS analysis using MaxQuant outputs (label-free data)
+## DEqMS analysis using MaxQuant outputs (label-free DDA data)
 Here we analyze a published label-free benchmark dataset in which either 
 10 or 30 µg of E. coli protein extract was spiked into human protein 
 extracts (50 µg) in triplicates (Cox J et al MCP 2014). The data was searched 
@@ -370,7 +370,8 @@ write.table(DEqMS.results,"DEqMS.results.miR372-ctrl.fromPSMtable.txt",
             sep = "\t",row.names = F,quote=F)
 ```
 
-Generate variance ~ PMS count boxplot, check if the DEqMS correctly find the relation between prior variance and PSM count
+Generate variance ~ PMS count boxplot, check if the DEqMS correctly find 
+the relation between prior variance and PSM count.
 ```{r PriorVarianceTrend}
 VarianceBoxplot(fit3,n=20, xlab="PSM count",main="TMT10plex dataset PXD004163")
 ```
@@ -383,7 +384,6 @@ the protein in the input table.
 peptideProfilePlot(dat=dat.psm.log,col=2,gene="TGFBR2")
 # col=2 is tell in which column of dat.psm.log to look for the gene
 ```
-
 
 # Comparing DEqMS to other methods
 The following steps are not required for get the results from DEqMS.
@@ -520,4 +520,162 @@ lines(sort(-log10(ttest.results$P.Value),decreasing = TRUE)[1:500],
         lty=2,lwd=2,col="orange")
 legend("topright",legend = c("Limma","DEqMS","Anova","t.test"),
         col = c("purple","red","blue","orange"),lty=c(2,1,2,2),lwd=2)
+```
+
+# Analyze label-free DIA quantitative proteomics data
+## Analyze Spectronaut search output
+Here, we use an example label-free DIA dataset searched by Spectronaut to demonstrate the workflow.
+To export Spectronaut quantification output for DEqMS analysis, select Minor 
+(Peptide) Grouping: by Precursor Under quantification settings,
+Then, Export Report > Run pivot report > select columns PG.Genes (or PG.ProteinGroups), 
+PEP.PEP.StrippedSequence, EG.PrecursorId,  PEP.IsGeneSpecific, PEP.MS2Quantity.
+Note: the data should be filtered based on the Q-value prior to export.
+
+### Prepare input data for DEqMS
+Export quantification table from Spectronaut. We have uploaded a benchmark DIA dataset that is exported from
+Spectronaut. This is a mixed complex (“three proteome”) dataset specifically for evaluation of DEqMS. Briefly, E. coli and C. elegans extracted proteomes were spiked into an H. sapiens proteome (HeLa cells) at ratio E. coli: C. elegans: H. sapiens equal to 2:1:7 (group A) or 1:2:7 (group B). The samples were prepared in triplicates, with each sample containing 100 µg of protein in total. The digested peptide mixtures were analyzed by Orbitrap Fusion with FAIMS Pro using DIA acquisition method. The data was searched by Spectronaut via direct-DIA mode using a combined protein database including H. sapiens, E. coli, and C. elegans proteome sequences downloaded from Uniprot. MS raw data has been uploaded to ProteomeXchange with identifier PXD038624.
+```{r downloadDIAinputdata}
+options(timeout = 1000)
+library(DEqMS)
+url <- "https://figshare.com/ndownloader/files/51093074"
+download.file(url, destfile = "./Spectronaut_report_pepQuant.tsv",
+              method = "auto")
+
+df.pep  <- read.delim("Spectronaut_report_pepQuant.tsv", 
+                      stringsAsFactors = F)
+#filter gene unique peptides before downstream analysis
+df.pep <- df.pep[df.pep$PEP.IsGeneSpecific=="True",]
+```
+
+Extract relevant columns corresponding to the peptide sequence, gene symbol, and precursor quantity.
+``` {r extractcolumn}
+pep_col <- grep("PEP.StrippedSequence", colnames(df.pep))
+prot_col <- grep("PG.Genes", colnames(df.pep))
+ecols <- grep("PEP.Quantity", colnames(df.pep))
+
+```
+
+read peptide data frame into `QFeatures` object.
+```{r QFeature}
+library(QFeatures)
+#rename the column names for samples
+colnames(df.pep)[ecols] = c("A1","A2","A3","B1","B2","B3")
+pe <- readQFeatures(
+  table = df.pep, fnames = "PEP.StrippedSequence", ecol = ecols,
+  name = "peptideRaw", sep = "\t"
+)
+#define the condition for samples
+colData(pe)$condition <- as.factor(c("A","A","A","B","B","B"))
+
+#count valid values for each peptide
+rowData(pe[["peptideRaw"]])$nNonZero <- rowSums(assay(pe[["peptideRaw"]]) > 0)
+# convert zero to NA
+pe <- zeroIsNA(pe, "peptideRaw") 
+
+```
+
+### Transform and Normalize the peptide data using median centering
+```{r normalize}
+#log2 transform the intensity values
+pe <- logTransform(pe, base = 2, i = "peptideRaw", name = "peptideLog")
+
+#filter peptide with minimum two values
+pe <- filterFeatures(pe, ~ nNonZero >= 2)
+nrow(pe[["peptideLog"]])
+
+pe <- normalize(pe,
+                i = "peptideLog",
+                name = "peptideNorm",
+                method = "center.median"
+)
+```
+
+
+### inpute missing values (optional)
+Some users might want to impute missing values before applying differential expression analysis. Here, we show how to perform imputation using `impute` function from `QFeatures` package which integrate several commonly used imputation methods.
+If you don't want to impute missing values, you can skip this step.
+
+```{r imputeMissingValues}
+pe <- impute(pe, i = "peptideLog",
+              method = "QRILC",
+                name = "peptideImpute"
+)
+
+```
+
+### Summarize peptide quantity to protein level using `aggregateFeatures` function.
+The default summarization method is robustSummary(), which calculate a robust 
+aggregation using MASS::rlm().See other available methods by typing 
+`?aggregateFeatures` in the R Console.
+
+```{r summarization}
+suppressWarnings(pe <- aggregateFeatures(pe,i = "peptideNorm", fcol = "PG.Genes", na.rm = TRUE,
+                        name = "gene"))
+gene.mat = assay(pe[["gene"]])
+dim(gene.mat)
+```
+
+### Extract precursor count data for proteins 
+When using `countPerProtein()`, ensure the input has correctly formatted missing values (missing values should not be in text format or 0).
+```{r extract count}
+df.pep.sub = df.pep[,c(prot_col,ecols)]
+pep.count.table <- countPeptidePerProtein(df.pep.sub)
+```
+
+### define different sample groups in your data and prepare precursor count table
+For example,there are sample group A and B in your experiment.
+Create design matrix and contrast(tell DEqMS which groups are compared)
+```{r DIAdesignMatrix}
+group <- as.factor(c(rep("A",3), rep("B",3)))
+design <- model.matrix(~0+group)
+x <- c("groupA-groupB") #calculate gene fold change between group A and B
+contrast <- makeContrasts(contrasts=x,levels=design)
+
+```
+
+### Fit linear model
+```{r fitlinearmomdel}
+fit1 <- lmFit(gene.mat, design)
+fit2 <- contrasts.fit(fit1,contrasts = contrast)
+fit3 <- eBayes(fit2)
+```
+
+
+### fit protein specific variance based on the number of peptide precursors for significance testing of differential expression. 
+```{r DIAfitvariance}
+fit3$count <- pep.count.table[rownames(fit3$coefficients),"median_count"]
+fit4 <- spectraCounteBayes(fit3)
+```
+
+### visualize variance distribution
+```{r makevarianceplot}
+VarianceBoxplot(fit4, n=20, main = "Label-free DIA-MS dataset PXD038624", 
+                xlab="median peptide precursor count")
+VarianceScatterplot(fit4,main = "Label-free DIA-MS dataset PXD038624", 
+                    xlab = "log2(median peptide precursor count)")
+```
+
+### Extract DEqMS results.
+If you defined multiple contrasts/comparisons in step 20, you need to specify 
+which contrast results to extract using the argument `coef_col`.  
+If you are not sure which coef_col refers to the specific contrast, 
+run `head(fit4$coefficients)` in the R console to show all contrasts.
+```{r outputDIAresult}
+res <- outputResult(fit4,coef_col = 1)
+```
+
+### count the number of TP and FP
+```{r evaluation}
+
+df.names = unique(df.pep[,c(5,6)])
+rownames(df.names) = df.names$PG.Genes
+
+res$Organism = df.names[res$gene,"PG.Organisms"]
+
+DEqMS.results=res[res$sca.adj.pval<0.05,]
+
+#count the number of TP and FP
+nrow(DEqMS.results[DEqMS.results$Organism=="Escherichia coli (strain K12)",])  # number of TP 
+nrow(DEqMS.results[DEqMS.results$Organism=="Caenorhabditis elegans",])  # number of TP 
+nrow(DEqMS.results[DEqMS.results$Organism=="Homo sapiens",]) #  number of FP
 ```
