@@ -28,7 +28,7 @@ dat.psm = eh[["EH1663"]]
 
 dat.psm.log = dat.psm
 dat.psm.log[,3:12] =  log2(dat.psm[,3:12])
-# use the 3 ctrl samples as reference channels to calculate log2 ratio
+# use the average of 3 ctrl samples as reference channels to calculate log2 ratio
 dat.gene = medianSummary(dat.psm.log,group_col = 2,ref_col =c(3,7,10))
 }
 \author{
