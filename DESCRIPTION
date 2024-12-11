@@ -4,7 +4,7 @@ Date: 2019/11/09
 Title: a tool to perform statistical analysis of differential protein expression for quantitative proteomics data.
 Author: Yafeng Zhu
 Maintainer: Yafeng Zhu <yafeng.zhu@outlook.com>
-Depends: R(>= 3.5),graphics,stats,ggplot2,matrixStats,limma(>= 3.34)
+Depends: R(>= 3.5),graphics,stats,ggplot2,matrixStats,QFeatures,limma(>= 3.34)
 Suggests: BiocStyle,knitr,rmarkdown,markdown,plyr,reshape2,utils,ggrepel,ExperimentHub,LSD
 LazyLoad: yes
 Description: DEqMS is developped on top of Limma. However, Limma assumes same prior variance for all genes. In proteomics, the accuracy of protein abundance estimates varies by the number of peptides/PSMs quantified in both label-free and labelled data. Proteins quantification by multiple peptides or PSMs are more accurate. DEqMS package is able to estimate different prior variances for proteins quantified by different number of PSMs/peptides, therefore acchieving better accuracy. The package can be applied to analyze both label-free and labelled proteomics data. 
