@@ -13,7 +13,7 @@ spectraCounteBayes<-function(fit,fit.method="loess",coef_col) {
     eg<-logVAR-digamma(df/2)+log(df/2)
     names(fit$count) <- rownames(fit$coefficients)
     
-    if (is.na(min(fit$count)){
+    if (is.na(min(fit$count))){
       stop("NA values found in fit3$count, Function exits!")
     }else if (min(fit$count==0)){
       print("minimum count is zero, add pseudocount 1")
@@ -221,4 +221,25 @@ medianSweeping <- function(dat,group_col=2,channelmedian_outfile) {
     dat.nm = equalMedianNormalization(dat.new, optional_outfile=channelmedian_outfile)
     return (dat.nm)
 }
+
+countPeptidePerProtein <- function(dataframe){
+  #this function count precursors per protein/gene for each sample
+  #the first column in input dataframe is protein/gene names
+  #the other columns are peptide intensity data
+  #this function returns a data frame with precursor count for each sample
+  #and report median precursor count
+  dataframe = unique(dataframe) # remove repetitive rows
+  table_list = list()
+  for (i in 2:ncol(dataframe)){
+    pepcount = as.data.frame(table(na.omit(dataframe[,c(1,i)])[,1]))
+    table_list[[i-1]] = pepcount
+  }
+  suppressWarnings({table_merge = Reduce(function(x, y) merge(x, y, by="Var1",all=TRUE), table_list)})
+  colnames(table_merge)  = colnames(dataframe)
+  rownames(table_merge) = table_merge[,1]
+  table_merge$median_count = round(rowMedians(as.matrix(table_merge[,2:ncol(table_merge)]),na.rm = T))
+  
+  return (table_merge)
+}
+
 
